@@ -1,5 +1,7 @@
-//! The module module contains the implementation data structures and helper functions used to
-//! manipulate and access wasm modules.
+//! This module contains the types to manipulate and access Wasm modules.
+//!
+//! A Wasm module is the artifact of compiling WebAssembly. Wasm modules are not executable
+//! until they're instantiated with imports (via [`ImportObject`]).
 use crate::{
     backend::RunnableModule,
     cache::{Artifact, Error as CacheError},
@@ -52,6 +54,10 @@ pub struct ModuleInfo {
     pub imported_globals: Map<ImportedGlobalIndex, (ImportName, GlobalDescriptor)>,
 
     /// Map of string to export index.
+    // Implementation note: this should maintain the order that the exports appear in the
+    // Wasm module.  Be careful not to use APIs that may break the order!
+    // Side note, because this is public we can't actually guarantee that it will remain
+    // in order.
     pub exports: IndexMap<String, ExportIndex>,
 
     /// Vector of data initializers.
@@ -164,6 +170,152 @@ impl Module {
     pub fn info(&self) -> &ModuleInfo {
         &self.inner.info
     }
+
+    /// Iterate over the exports that this module provides.
+    ///
+    /// ```
+    /// # use wasmer_runtime_core::module::*;
+    /// # fn example(module: &Module) {
+    /// // We can filter by `ExportKind` to get only certain types of exports.
+    /// // For example, here we get all the names of the functions exported by this module.
+    /// let function_names =
+    ///     module.exports()
+    ///           .filter(|ed| ed.kind == ExportKind::Function)
+    ///           .map(|ed| ed.name.to_string())
+    ///           .collect::<Vec<String>>();
+    ///
+    /// // And here we count the number of global variables exported by this module.
+    /// let num_globals =
+    ///     module.exports()
+    ///           .filter(|ed| ed.kind == ExportKind::Global)
+    ///           .count();
+    /// # }
+    /// ```
+    pub fn exports(&self) -> impl Iterator<Item = ExportDescriptor> + '_ {
+        self.inner
+            .info
+            .exports
+            .iter()
+            .map(|(name, &ei)| ExportDescriptor {
+                name,
+                kind: ei.into(),
+            })
+    }
+
+    /// Get the [`Import`]s this [`Module`] requires to be instantiated.
+    pub fn imports(&self) -> Vec<Import> {
+        let mut out = Vec::with_capacity(
+            self.inner.info.imported_functions.len()
+                + self.inner.info.imported_memories.len()
+                + self.inner.info.imported_tables.len()
+                + self.inner.info.imported_globals.len(),
+        );
+
+        /// Lookup the (namespace, name) in the [`ModuleInfo`] by index.
+        fn get_import_name(
+            info: &ModuleInfo,
+            &ImportName {
+                namespace_index,
+                name_index,
+            }: &ImportName,
+        ) -> (String, String) {
+            let namespace = info.namespace_table.get(namespace_index).to_string();
+            let name = info.name_table.get(name_index).to_string();
+
+            (namespace, name)
+        }
+
+        let info = &self.inner.info;
+
+        let imported_functions = info.imported_functions.values().map(|import_name| {
+            let (namespace, name) = get_import_name(info, import_name);
+            Import {
+                namespace,
+                name,
+                ty: ImportType::Function,
+            }
+        });
+        let imported_memories =
+            info.imported_memories
+                .values()
+                .map(|(import_name, memory_descriptor)| {
+                    let (namespace, name) = get_import_name(info, import_name);
+                    Import {
+                        namespace,
+                        name,
+                        ty: memory_descriptor.into(),
+                    }
+                });
+        let imported_tables =
+            info.imported_tables
+                .values()
+                .map(|(import_name, table_descriptor)| {
+                    let (namespace, name) = get_import_name(info, import_name);
+                    Import {
+                        namespace,
+                        name,
+                        ty: table_descriptor.into(),
+                    }
+                });
+        let imported_globals =
+            info.imported_globals
+                .values()
+                .map(|(import_name, global_descriptor)| {
+                    let (namespace, name) = get_import_name(info, import_name);
+                    Import {
+                        namespace,
+                        name,
+                        ty: global_descriptor.into(),
+                    }
+                });
+
+        out.extend(imported_functions);
+        out.extend(imported_memories);
+        out.extend(imported_tables);
+        out.extend(imported_globals);
+        out
+    }
+
+    /// Get the custom sections matching the given name.
+    pub fn custom_sections(&self, key: impl AsRef<str>) -> Option<&[Vec<u8>]> {
+        let key = key.as_ref();
+        self.inner.info.custom_sections.get(key).map(|v| v.as_ref())
+    }
+}
+
+// TODO: review this vs `ExportIndex`
+/// Type describing an export that the [`Module`] provides.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ExportDescriptor<'a> {
+    /// The name identifying the export.
+    pub name: &'a str,
+    /// The type of the export.
+    pub kind: ExportKind,
+}
+
+// TODO: kind vs type
+/// Tag indicating the type of the export.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ExportKind {
+    /// The export is a function.
+    Function,
+    /// The export is a global variable.
+    Global,
+    /// The export is a linear memory.
+    Memory,
+    /// The export is a table.
+    Table,
+}
+
+impl From<ExportIndex> for ExportKind {
+    fn from(other: ExportIndex) -> Self {
+        match other {
+            ExportIndex::Func(_) => Self::Function,
+            ExportIndex::Global(_) => Self::Global,
+            ExportIndex::Memory(_) => Self::Memory,
+            ExportIndex::Table(_) => Self::Table,
+        }
+    }
 }
 
 impl Clone for Module {
@@ -172,6 +324,66 @@ impl Clone for Module {
             inner: Arc::clone(&self.inner),
         }
     }
+}
+
+/// The type of import. This indicates whether the import is a function, global, memory, or table.
+// TODO: discuss and research Kind vs Type;
+// `Kind` has meaning to me from Haskell as an incomplete type like
+// `List` which is of kind `* -> *`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ImportType {
+    /// The import is a function.
+    // TODO: why does function have no data?
+    Function,
+    /// The import is a global variable.
+    Global(GlobalDescriptor),
+    /// A Wasm linear memory.
+    Memory(MemoryDescriptor),
+    /// A Wasm table.
+    Table(TableDescriptor),
+}
+
+impl From<MemoryDescriptor> for ImportType {
+    fn from(other: MemoryDescriptor) -> Self {
+        ImportType::Memory(other)
+    }
+}
+impl From<&MemoryDescriptor> for ImportType {
+    fn from(other: &MemoryDescriptor) -> Self {
+        ImportType::Memory(*other)
+    }
+}
+
+impl From<TableDescriptor> for ImportType {
+    fn from(other: TableDescriptor) -> Self {
+        ImportType::Table(other)
+    }
+}
+impl From<&TableDescriptor> for ImportType {
+    fn from(other: &TableDescriptor) -> Self {
+        ImportType::Table(*other)
+    }
+}
+impl From<GlobalDescriptor> for ImportType {
+    fn from(other: GlobalDescriptor) -> Self {
+        ImportType::Global(other)
+    }
+}
+impl From<&GlobalDescriptor> for ImportType {
+    fn from(other: &GlobalDescriptor) -> Self {
+        ImportType::Global(*other)
+    }
+}
+
+/// A type describing an import that a [`Module`] needs to be instantiated.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Import {
+    /// The namespace that this import is in.
+    pub namespace: String,
+    /// The name of the import.
+    pub name: String,
+    /// The type of the import.
+    pub ty: ImportType,
 }
 
 impl ModuleInner {}
