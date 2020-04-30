@@ -23,10 +23,10 @@ use crate::{
     ExitCode,
 };
 use std::borrow::Borrow;
-use std::cell::Cell;
 use std::convert::{Infallible, TryInto};
 use std::io::{self, Read, Seek, Write};
 use wasmer_runtime_core::{memory::Memory, vm::Ctx};
+use crossbeam_utils::atomic::AtomicCell;
 
 #[cfg(any(
     target_os = "freebsd",
@@ -51,14 +51,14 @@ pub(crate) fn get_memory_and_wasi_state(
 fn write_bytes_inner<T: Write>(
     mut write_loc: T,
     memory: &Memory,
-    iovs_arr_cell: &[Cell<__wasi_ciovec_t>],
+    iovs_arr_cell: &[AtomicCell<__wasi_ciovec_t>],
 ) -> Result<u32, __wasi_errno_t> {
     let mut bytes_written = 0;
     for iov in iovs_arr_cell {
-        let iov_inner = iov.get();
+        let iov_inner = iov.load();
         let bytes = iov_inner.buf.deref(memory, 0, iov_inner.buf_len)?;
         write_loc
-            .write_all(&bytes.iter().map(|b_cell| b_cell.get()).collect::<Vec<u8>>())
+            .write_all(&bytes.iter().map(|b_cell| b_cell.load()).collect::<Vec<u8>>())
             .map_err(|_| __WASI_EIO)?;
 
         // TODO: handle failure more accurately
@@ -70,7 +70,7 @@ fn write_bytes_inner<T: Write>(
 fn write_bytes<T: Write>(
     mut write_loc: T,
     memory: &Memory,
-    iovs_arr_cell: &[Cell<__wasi_ciovec_t>],
+    iovs_arr_cell: &[AtomicCell<__wasi_ciovec_t>],
 ) -> Result<u32, __wasi_errno_t> {
     let result = write_bytes_inner(&mut write_loc, memory, iovs_arr_cell);
     write_loc.flush();
@@ -80,12 +80,12 @@ fn write_bytes<T: Write>(
 fn read_bytes<T: Read>(
     mut reader: T,
     memory: &Memory,
-    iovs_arr_cell: &[Cell<__wasi_iovec_t>],
+    iovs_arr_cell: &[AtomicCell<__wasi_iovec_t>],
 ) -> Result<u32, __wasi_errno_t> {
     let mut bytes_read = 0;
 
     for iov in iovs_arr_cell {
-        let iov_inner = iov.get();
+        let iov_inner = iov.load();
         let bytes = iov_inner.buf.deref(memory, 0, iov_inner.buf_len)?;
         let mut raw_bytes: &mut [u8] =
             unsafe { &mut *(bytes as *const [_] as *mut [_] as *mut [u8]) };
@@ -110,13 +110,13 @@ fn write_buffer_array(
 
     let mut current_buffer_offset = 0;
     for ((i, sub_buffer), ptr) in from.iter().enumerate().zip(ptrs.iter()) {
-        ptr.set(WasmPtr::new(buffer.offset() + current_buffer_offset));
+        ptr.store(WasmPtr::new(buffer.offset() + current_buffer_offset));
 
         let cells =
             wasi_try!(buffer.deref(memory, current_buffer_offset, sub_buffer.len() as u32 + 1));
 
         for (cell, &byte) in cells.iter().zip(sub_buffer.iter().chain([0].iter())) {
-            cell.set(byte);
+            cell.store(byte);
         }
         current_buffer_offset += sub_buffer.len() as u32 + 1;
     }
@@ -189,8 +189,8 @@ pub fn args_sizes_get(
 
     let argc_val = state.args.len() as u32;
     let argv_buf_size_val = state.args.iter().map(|v| v.len() as u32 + 1).sum();
-    argc.set(argc_val);
-    argv_buf_size.set(argv_buf_size_val);
+    argc.store(argc_val);
+    argv_buf_size.store(argv_buf_size_val);
 
     debug!("=> argc={}, argv_buf_size={}", argc_val, argv_buf_size_val);
 
@@ -243,7 +243,7 @@ pub fn clock_time_get(
     let result = platform_clock_time_get(clock_id, precision, out_addr);
     debug!(
         "time: {} => {}",
-        wasi_try!(time.deref(memory)).get(),
+        wasi_try!(time.deref(memory)).load(),
         result
     );
     result
@@ -288,8 +288,8 @@ pub fn environ_sizes_get(
 
     let env_var_count = state.envs.len() as u32;
     let env_buf_size = state.envs.iter().map(|v| v.len() as u32 + 1).sum();
-    environ_count.set(env_var_count);
-    environ_buf_size.set(env_buf_size);
+    environ_count.store(env_var_count);
+    environ_buf_size.store(env_buf_size);
 
     debug!(
         "env_var_count: {}, env_buf_size: {}",
@@ -434,7 +434,7 @@ pub fn fd_fdstat_get(
     let stat = wasi_try!(state.fs.fdstat(fd));
     let buf = wasi_try!(buf_ptr.deref(memory));
 
-    buf.set(stat);
+    buf.store(stat);
 
     __WASI_ESUCCESS
 }
@@ -518,7 +518,7 @@ pub fn fd_filestat_get(
     let stat = wasi_try!(state.fs.filestat_fd(fd));
 
     let buf = wasi_try!(buf.deref(memory));
-    buf.set(stat);
+    buf.store(stat);
 
     __WASI_ESUCCESS
 }
@@ -711,7 +711,7 @@ pub fn fd_pread(
         }
     };
 
-    nread_cell.set(bytes_read);
+    nread_cell.store(bytes_read);
     debug!("Success: {} bytes read", bytes_read);
     __WASI_ESUCCESS
 }
@@ -734,7 +734,7 @@ pub fn fd_prestat_get(
 
     let prestat_ptr = wasi_try!(buf.deref(memory));
 
-    prestat_ptr.set(wasi_try!(state.fs.prestat_fd(fd)));
+    prestat_ptr.store(wasi_try!(state.fs.prestat_fd(fd)));
 
     __WASI_ESUCCESS
 }
@@ -763,10 +763,10 @@ pub fn fd_prestat_dir_name(
             if inode_val.name.len() <= path_len as usize {
                 let mut i = 0;
                 for c in inode_val.name.bytes() {
-                    path_chars[i].set(c);
+                    path_chars[i].store(c);
                     i += 1
                 }
-                path_chars[i].set(0);
+                path_chars[i].store(0);
 
                 debug!(
                     "=> result: \"{}\"",
@@ -869,7 +869,7 @@ pub fn fd_pwrite(
         }
     };
 
-    nwritten_cell.set(bytes_written);
+    nwritten_cell.store(bytes_written);
 
     __WASI_ESUCCESS
 }
@@ -946,7 +946,7 @@ pub fn fd_read(
         }
     };
 
-    nread_cell.set(bytes_read);
+    nread_cell.store(bytes_read);
 
     __WASI_ESUCCESS
 }
@@ -1056,7 +1056,7 @@ pub fn fd_readdir(
             std::mem::size_of::<__wasi_dirent_t>(),
         );
         for i in 0..upper_limit {
-            buf_arr_cell[i + buf_idx].set(dirent_bytes[i]);
+            buf_arr_cell[i + buf_idx].store(dirent_bytes[i]);
         }
         buf_idx += upper_limit;
         if upper_limit != std::mem::size_of::<__wasi_dirent_t>() {
@@ -1064,7 +1064,7 @@ pub fn fd_readdir(
         }
         let upper_limit = std::cmp::min(buf_len as usize - buf_idx, namlen);
         for (i, b) in entry_path_str.bytes().take(upper_limit).enumerate() {
-            buf_arr_cell[i + buf_idx].set(b);
+            buf_arr_cell[i + buf_idx].store(b);
         }
         buf_idx += upper_limit;
         if upper_limit != namlen {
@@ -1072,7 +1072,7 @@ pub fn fd_readdir(
         }
     }
 
-    bufused_cell.set(buf_idx as u32);
+    bufused_cell.store(buf_idx as u32);
     __WASI_ESUCCESS
 }
 
@@ -1160,7 +1160,7 @@ pub fn fd_seek(
         _ => return __WASI_EINVAL,
     }
 
-    new_offset_cell.set(fd_entry.offset);
+    new_offset_cell.store(fd_entry.offset);
 
     __WASI_ESUCCESS
 }
@@ -1223,7 +1223,7 @@ pub fn fd_tell(
         return __WASI_EACCES;
     }
 
-    offset_cell.set(fd_entry.offset);
+    offset_cell.store(fd_entry.offset);
 
     __WASI_ESUCCESS
 }
@@ -1317,7 +1317,7 @@ pub fn fd_write(
         }
     };
 
-    nwritten_cell.set(bytes_written);
+    nwritten_cell.store(bytes_written);
 
     __WASI_ESUCCESS
 }
@@ -1473,7 +1473,7 @@ pub fn path_filestat_get(
     };
 
     let buf_cell = wasi_try!(buf.deref(memory));
-    buf_cell.set(stat);
+    buf_cell.store(stat);
 
     __WASI_ESUCCESS
 }
@@ -1736,7 +1736,7 @@ pub fn path_open(
                 if let Some(special_fd) = fd {
                     // short circuit if we're dealing with a special file
                     assert!(handle.is_some());
-                    fd_cell.set(*special_fd);
+                    fd_cell.store(*special_fd);
                     return __WASI_ESUCCESS;
                 }
                 if o_flags & __WASI_O_DIRECTORY != 0 {
@@ -1891,7 +1891,7 @@ pub fn path_open(
         inode
     ));
 
-    fd_cell.set(out_fd);
+    fd_cell.store(out_fd);
     debug!("wasi::path_open returning fd {}", out_fd);
 
     __WASI_ESUCCESS
@@ -1943,13 +1943,13 @@ pub fn path_readlink(
         let out = wasi_try!(buf.deref(memory, 0, buf_len));
         let mut bytes_written = 0;
         for b in bytes {
-            out[bytes_written].set(b);
+            out[bytes_written].store(b);
             bytes_written += 1;
         }
         // should we null terminate this?
 
         let bytes_out = wasi_try!(buf_used.deref(memory));
-        bytes_out.set(bytes_written as u32);
+        bytes_out.store(bytes_written as u32);
     } else {
         return __WASI_EINVAL;
     }
@@ -2338,7 +2338,7 @@ pub fn poll_oneoff(
     let mut total_ns_slept = 0;
 
     for sub in subscription_array.iter() {
-        let s: WasiSubscription = wasi_try!(sub.get().try_into());
+        let s: WasiSubscription = wasi_try!(sub.load().try_into());
         let mut peb = PollEventBuilder::new();
         let mut ns_to_sleep = 0;
 
@@ -2466,9 +2466,9 @@ pub fn poll_oneoff(
             }
         }
         let event = __wasi_event_t {
-            userdata: subscription_array[i].get().userdata,
+            userdata: subscription_array[i].load().userdata,
             error,
-            type_: subscription_array[i].get().type_,
+            type_: subscription_array[i].load().type_,
             u: unsafe {
                 __wasi_event_u {
                     fd_readwrite: __wasi_event_fd_readwrite_t {
@@ -2478,7 +2478,7 @@ pub fn poll_oneoff(
                 }
             },
         };
-        event_array[events_seen].set(event);
+        event_array[events_seen].store(event);
         events_seen += 1;
     }
     for clock_info in clock_subs {
@@ -2496,10 +2496,10 @@ pub fn poll_oneoff(
                 }
             },
         };
-        event_array[events_seen].set(event);
+        event_array[events_seen].store(event);
         events_seen += 1;
     }
-    out_ptr.set(events_seen as u32);
+    out_ptr.store(events_seen as u32);
     __WASI_ESUCCESS
 }
 

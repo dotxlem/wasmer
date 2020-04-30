@@ -1,18 +1,23 @@
 //! This is a wrapper around the `WasmPtr` abstraction that returns __WASI_EFAULT
 //! if memory access failed
 
-use crate::syscalls::types::{__wasi_errno_t, __WASI_EFAULT};
-use std::{cell::Cell, fmt};
-pub use wasmer_runtime_core::memory::ptr::Array;
+use std::fmt;
+
+use crossbeam_utils::atomic::AtomicCell;
+
 use wasmer_runtime_core::{
-    memory::{ptr, Memory},
+    memory::{Memory, ptr},
     types::{ValueType, WasmExternType},
 };
+pub use wasmer_runtime_core::memory::ptr::Array;
+
+use crate::syscalls::types::{__WASI_EFAULT, __wasi_errno_t};
 
 #[repr(transparent)]
 pub struct WasmPtr<T: Copy, Ty = ptr::Item>(ptr::WasmPtr<T, Ty>);
 
 unsafe impl<T: Copy, Ty> ValueType for WasmPtr<T, Ty> {}
+
 impl<T: Copy, Ty> Copy for WasmPtr<T, Ty> {}
 
 impl<T: Copy, Ty> Clone for WasmPtr<T, Ty> {
@@ -60,7 +65,7 @@ impl<T: Copy, Ty> WasmPtr<T, Ty> {
 
 impl<T: Copy + ValueType> WasmPtr<T, ptr::Item> {
     #[inline(always)]
-    pub fn deref<'a>(self, memory: &'a Memory) -> Result<&'a Cell<T>, __wasi_errno_t> {
+    pub fn deref<'a>(self, memory: &'a Memory) -> Result<&'a AtomicCell<T>, __wasi_errno_t> {
         self.0.deref(memory).ok_or(__WASI_EFAULT)
     }
 }
@@ -72,7 +77,7 @@ impl<T: Copy + ValueType> WasmPtr<T, ptr::Array> {
         memory: &'a Memory,
         index: u32,
         length: u32,
-    ) -> Result<&'a [Cell<T>], __wasi_errno_t> {
+    ) -> Result<&'a [AtomicCell<T>], __wasi_errno_t> {
         self.0.deref(memory, index, length).ok_or(__WASI_EFAULT)
     }
 

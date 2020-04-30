@@ -23,7 +23,7 @@ pub fn fd_filestat_get(
 
     // Copy the data including the extra data
     let new_filestat_setup: types::__wasi_filestat_t =
-        wasi_try!(new_buf.deref(memory)).get().clone();
+        wasi_try!(new_buf.deref(memory)).load().clone();
 
     // Set up complete, make the call with the pointer that will write to the
     // struct and some unrelated memory after the struct.
@@ -33,7 +33,7 @@ pub fn fd_filestat_get(
     let memory = ctx.memory(0);
 
     // get the values written to memory
-    let new_filestat = wasi_try!(new_buf.deref(memory)).get();
+    let new_filestat = wasi_try!(new_buf.deref(memory)).load();
     // translate the new struct into the old struct in host memory
     let old_stat = snapshot0::__wasi_filestat_t {
         st_dev: new_filestat.st_dev,
@@ -48,11 +48,11 @@ pub fn fd_filestat_get(
 
     // write back the original values at the pointer's memory locations
     // (including the memory unrelated to the pointer)
-    wasi_try!(new_buf.deref(memory)).set(new_filestat_setup);
+    wasi_try!(new_buf.deref(memory)).store(new_filestat_setup);
 
     // Now that this memory is back as it was, write the translated filestat
     // into memory leaving it as it should be
-    wasi_try!(buf.deref(memory)).set(old_stat);
+    wasi_try!(buf.deref(memory)).store(old_stat);
 
     result
 }
@@ -72,12 +72,12 @@ pub fn path_filestat_get(
 
     let new_buf: WasmPtr<types::__wasi_filestat_t> = unsafe { std::mem::transmute(buf) };
     let new_filestat_setup: types::__wasi_filestat_t =
-        wasi_try!(new_buf.deref(memory)).get().clone();
+        wasi_try!(new_buf.deref(memory)).load().clone();
 
     let result = syscalls::path_filestat_get(ctx, fd, flags, path, path_len, new_buf);
 
     let memory = ctx.memory(0);
-    let new_filestat = wasi_try!(new_buf.deref(memory)).get();
+    let new_filestat = wasi_try!(new_buf.deref(memory)).load();
     let old_stat = snapshot0::__wasi_filestat_t {
         st_dev: new_filestat.st_dev,
         st_ino: new_filestat.st_ino,
@@ -89,8 +89,8 @@ pub fn path_filestat_get(
         st_ctim: new_filestat.st_ctim,
     };
 
-    wasi_try!(new_buf.deref(memory)).set(new_filestat_setup);
-    wasi_try!(buf.deref(memory)).set(old_stat);
+    wasi_try!(new_buf.deref(memory)).store(new_filestat_setup);
+    wasi_try!(buf.deref(memory)).store(old_stat);
 
     result
 }
@@ -130,7 +130,7 @@ pub fn poll_oneoff(
     let memory = ctx.memory(0);
     let mut in_origs: Vec<snapshot0::__wasi_subscription_t> = vec![];
     for in_sub in wasi_try!(in_.deref(memory, 0, nsubscriptions)) {
-        in_origs.push(in_sub.get().clone());
+        in_origs.push(in_sub.load().clone());
     }
 
     // get a pointer to the smaller new type
@@ -141,7 +141,7 @@ pub fn poll_oneoff(
         .iter()
         .zip(in_origs.iter())
     {
-        in_sub_new.set(types::__wasi_subscription_t {
+        in_sub_new.store(types::__wasi_subscription_t {
             userdata: orig.userdata,
             type_: orig.type_,
             u: if orig.type_ == types::__WASI_EVENTTYPE_CLOCK {
@@ -171,7 +171,7 @@ pub fn poll_oneoff(
         .iter()
         .zip(in_origs.into_iter())
     {
-        in_sub.set(orig);
+        in_sub.store(orig);
     }
 
     result

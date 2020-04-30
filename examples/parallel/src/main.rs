@@ -17,7 +17,7 @@ fn get_hashed_password(ctx: &mut Ctx, ptr: WasmPtr<u8, Array>, len: u32) -> u32 
     let memory = ctx.memory(0);
     if let Some(writer) = ptr.deref(memory, 0, len) {
         for (i, byte) in password.iter().enumerate() {
-            writer[i].set(*byte)
+            writer[i].store(*byte)
         }
 
         0

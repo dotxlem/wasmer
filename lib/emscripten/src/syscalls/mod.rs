@@ -359,9 +359,9 @@ pub fn ___syscall183(ctx: &mut Ctx, _which: c_int, mut varargs: VarArgs) -> i32 
 
     let buf_writer = buf_offset.deref(ctx.memory(0), 0, len as u32 + 1).unwrap();
     for (i, byte) in path_string.bytes().enumerate() {
-        buf_writer[i].set(byte as _);
+        buf_writer[i].store(byte as _);
     }
-    buf_writer[len].set(0);
+    buf_writer[len].store(0);
     buf_offset.offset() as i32
 }
 
@@ -413,7 +413,7 @@ pub fn ___syscall140(ctx: &mut Ctx, _which: i32, mut varargs: VarArgs) -> i32 {
     let ret = unsafe { lseek(fd, offset as _, whence) as i64 };
 
     let result_ptr = result_ptr_value.deref(ctx.memory(0)).unwrap();
-    result_ptr.set(ret);
+    result_ptr.store(ret);
 
     debug!(
         "=> fd: {}, offset: {}, result: {}, whence: {} = {}\nlast os error: {}",

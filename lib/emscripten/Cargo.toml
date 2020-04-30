@@ -16,6 +16,7 @@ libc = "0.2.60"
 log = "0.4"
 time = "0.1"
 wasmer-runtime-core = { path = "../runtime-core", version = "0.16.2" }
+crossbeam-utils = "0.7.2"
 
 [target.'cfg(windows)'.dependencies]
 getrandom = "0.1"

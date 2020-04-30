@@ -3,12 +3,12 @@ use libc::{
     clock_getres, clock_gettime, timespec, CLOCK_MONOTONIC, CLOCK_PROCESS_CPUTIME_ID,
     CLOCK_REALTIME, CLOCK_THREAD_CPUTIME_ID,
 };
-use std::cell::Cell;
 use std::mem;
+use crossbeam_utils::atomic::AtomicCell;
 
 pub fn platform_clock_res_get(
     clock_id: __wasi_clockid_t,
-    resolution: &Cell<__wasi_timestamp_t>,
+    resolution: &AtomicCell<__wasi_timestamp_t>,
 ) -> __wasi_errno_t {
     let unix_clock_id = match clock_id {
         __WASI_CLOCK_MONOTONIC => CLOCK_MONOTONIC,
@@ -27,7 +27,7 @@ pub fn platform_clock_res_get(
     };
 
     let t_out = (timespec_out.tv_sec * 1_000_000_000).wrapping_add(timespec_out.tv_nsec);
-    resolution.set(t_out as __wasi_timestamp_t);
+    resolution.store(t_out as __wasi_timestamp_t);
 
     // TODO: map output of clock_getres to __wasi_errno_t
     __WASI_ESUCCESS
@@ -36,7 +36,7 @@ pub fn platform_clock_res_get(
 pub fn platform_clock_time_get(
     clock_id: __wasi_clockid_t,
     precision: __wasi_timestamp_t,
-    time: &Cell<__wasi_timestamp_t>,
+    time: &AtomicCell<__wasi_timestamp_t>,
 ) -> __wasi_errno_t {
     let unix_clock_id = match clock_id {
         __WASI_CLOCK_MONOTONIC => CLOCK_MONOTONIC,
@@ -58,7 +58,7 @@ pub fn platform_clock_time_get(
     };
 
     let t_out = (timespec_out.tv_sec * 1_000_000_000).wrapping_add(timespec_out.tv_nsec);
-    time.set(t_out as __wasi_timestamp_t);
+    time.store(t_out as __wasi_timestamp_t);
 
     // TODO: map output of clock_gettime to __wasi_errno_t
     __WASI_ESUCCESS

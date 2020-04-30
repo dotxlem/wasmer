@@ -2857,6 +2857,7 @@ name = "wasmer-emscripten"
 version = "0.16.2"
 dependencies = [
  "byteorder",
+ "crossbeam-utils",
  "getrandom",
  "lazy_static",
  "libc",
@@ -2946,6 +2947,7 @@ dependencies = [
  "bincode",
  "blake3",
  "cc",
+ "crossbeam-utils",
  "digest",
  "errno",
  "hex",
@@ -2990,6 +2992,7 @@ version = "0.16.2"
 dependencies = [
  "bincode",
  "byteorder",
+ "crossbeam-utils",
  "generational-arena",
  "getrandom",
  "libc",

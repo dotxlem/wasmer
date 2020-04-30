@@ -21,6 +21,7 @@ time = "0.1"
 typetag = "0.1"
 serde = { version = "1", features = ["derive"] }
 wasmer-runtime-core = { path = "../runtime-core", version = "0.16.2" }
+crossbeam-utils = "0.7.2"
 
 [target.'cfg(windows)'.dependencies]
 winapi = "0.3"

@@ -629,8 +629,8 @@ pub fn ___syscall102(ctx: &mut Ctx, _which: c_int, mut varargs: VarArgs) -> c_in
             debug!(
                 "=> socket: {}, address: {:?}, address_len: {}",
                 socket,
-                address.deref(ctx.memory(0)).unwrap().get(),
-                address_len.deref(ctx.memory(0)).unwrap().get()
+                address.deref(ctx.memory(0)).unwrap().load(),
+                address_len.deref(ctx.memory(0)).unwrap().load()
             );
             let address_len_addr =
                 unsafe { address_len.deref_mut(ctx.memory(0)).unwrap().get_mut() };

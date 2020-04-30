@@ -5,12 +5,15 @@
 // don't want to warn about unusued code here
 #![allow(dead_code)]
 
-use std::{cell::Cell, fmt};
-pub use wasmer_runtime_core::memory::ptr::Array;
+use std::fmt;
+
+use crossbeam_utils::atomic::AtomicCell;
+
 use wasmer_runtime_core::{
-    memory::{ptr, Memory},
+    memory::{Memory, ptr},
     types::{ValueType, WasmExternType},
 };
+pub use wasmer_runtime_core::memory::ptr::Array;
 
 #[repr(transparent)]
 pub struct WasmPtr<T: Copy, Ty = ptr::Item>(ptr::WasmPtr<T, Ty>);
@@ -63,7 +66,7 @@ impl<T: Copy, Ty> WasmPtr<T, Ty> {
 
 impl<T: Copy + ValueType> WasmPtr<T, ptr::Item> {
     #[inline(always)]
-    pub fn deref<'a>(self, memory: &'a Memory) -> Option<&'a Cell<T>> {
+    pub fn deref<'a>(self, memory: &'a Memory) -> Option<&'a AtomicCell<T>> {
         if self.0.offset() == 0 {
             None
         } else {
@@ -72,7 +75,7 @@ impl<T: Copy + ValueType> WasmPtr<T, ptr::Item> {
     }
 
     #[inline(always)]
-    pub unsafe fn deref_mut<'a>(self, memory: &'a Memory) -> Option<&'a mut Cell<T>> {
+    pub unsafe fn deref_mut<'a>(self, memory: &'a Memory) -> Option<&'a mut AtomicCell<T>> {
         if self.0.offset() == 0 {
             None
         } else {
@@ -83,7 +86,7 @@ impl<T: Copy + ValueType> WasmPtr<T, ptr::Item> {
 
 impl<T: Copy + ValueType> WasmPtr<T, ptr::Array> {
     #[inline(always)]
-    pub fn deref<'a>(self, memory: &'a Memory, index: u32, length: u32) -> Option<&'a [Cell<T>]> {
+    pub fn deref<'a>(self, memory: &'a Memory, index: u32, length: u32) -> Option<&'a [AtomicCell<T>]> {
         if self.0.offset() == 0 {
             None
         } else {
@@ -97,7 +100,7 @@ impl<T: Copy + ValueType> WasmPtr<T, ptr::Array> {
         memory: &'a Memory,
         index: u32,
         length: u32,
-    ) -> Option<&'a mut [Cell<T>]> {
+    ) -> Option<&'a mut [AtomicCell<T>]> {
         if self.0.offset() == 0 {
             None
         } else {

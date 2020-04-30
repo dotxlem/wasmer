@@ -3,10 +3,10 @@ use libc::{
     c_int, getenv, getgrnam as libc_getgrnam, getpwnam as libc_getpwnam, putenv, setenv, sysconf,
     unsetenv,
 };
-use std::cell::Cell;
 use std::ffi::CStr;
 use std::mem;
 use std::os::raw::c_char;
+use crossbeam_utils::atomic::AtomicCell;
 
 use crate::env::{call_malloc, call_malloc_with_cast, EmAddrInfo, EmSockAddr};
 use crate::ptr::{Array, WasmPtr};
@@ -157,7 +157,7 @@ pub fn _gai_strerror(ctx: &mut Ctx, ecode: i32) -> i32 {
             .unwrap()
     };
     for (i, byte) in bytes.iter().enumerate() {
-        writer[i].set(*byte as _);
+        writer[i].store(*byte as _);
     }
 
     string_on_guest.offset() as _
@@ -177,7 +177,7 @@ pub fn _getaddrinfo(
         node_ptr
             .deref(memory)
             .map(|np| {
-                std::ffi::CStr::from_ptr(np as *const Cell<c_char> as *const c_char)
+                std::ffi::CStr::from_ptr(np as *const AtomicCell<c_char> as *const c_char)
                     .to_string_lossy()
             })
             .unwrap_or(std::borrow::Cow::Borrowed("null"))
@@ -186,14 +186,14 @@ pub fn _getaddrinfo(
         service_str_ptr
             .deref(memory)
             .map(|np| {
-                std::ffi::CStr::from_ptr(np as *const Cell<c_char> as *const c_char)
+                std::ffi::CStr::from_ptr(np as *const AtomicCell<c_char> as *const c_char)
                     .to_string_lossy()
             })
             .unwrap_or(std::borrow::Cow::Borrowed("null"))
     });
 
     let hints = hints_ptr.deref(memory).map(|hints_memory| {
-        let hints_guest = hints_memory.get();
+        let hints_guest = hints_memory.load();
         addrinfo {
             ai_flags: hints_guest.ai_flags,
             ai_family: hints_guest.ai_family,
@@ -213,11 +213,11 @@ pub fn _getaddrinfo(
         libc::getaddrinfo(
             (node_ptr
                 .deref(memory)
-                .map(|m| m as *const Cell<c_char> as *const c_char))
+                .map(|m| m as *const AtomicCell<c_char> as *const c_char))
             .unwrap_or(std::ptr::null()),
             service_str_ptr
                 .deref(memory)
-                .map(|m| m as *const Cell<c_char> as *const c_char)
+                .map(|m| m as *const AtomicCell<c_char> as *const c_char)
                 .unwrap_or(std::ptr::null()),
             hints
                 .as_ref()
@@ -281,7 +281,7 @@ pub fn _getaddrinfo(
                         .deref(ctx.memory(0), 0, str_size as _)
                         .unwrap();
                     for (i, b) in canonname_bytes.into_iter().enumerate() {
-                        guest_canonname_writer[i].set(*b as _)
+                        guest_canonname_writer[i].store(*b as _)
                     }
 
                     guest_canonname
@@ -311,7 +311,7 @@ pub fn _getaddrinfo(
         head_of_list.unwrap_or(WasmPtr::new(0))
     };
 
-    res_val_ptr.deref(ctx.memory(0)).unwrap().set(head_of_list);
+    res_val_ptr.deref(ctx.memory(0)).unwrap().store(head_of_list);
 
     0
 }
