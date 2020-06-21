@@ -1,5 +1,5 @@
 [package]
-name = "wasmer-runtime"
+name = "wasmer-runtime-asml-fork"
 version = "0.16.2"
 description = "Wasmer runtime library"
 license = "MIT"
