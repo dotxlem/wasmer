@@ -38,6 +38,7 @@ criterion = "0.3"
 wabt = "0.9.1"
 
 [dependencies.wasmer-llvm-backend]
+version = "0.16.2"
 path = "../llvm-backend"
 optional = true
 
