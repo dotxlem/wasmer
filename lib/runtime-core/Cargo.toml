@@ -1,6 +1,6 @@
 [package]
 name = "wasmer-runtime-core-asml-fork"
-version = "0.1.0"
+version = "0.1.1"
 description = "Wasmer runtime core library"
 license = "MIT"
 authors = ["The Wasmer Engineering Team <engineering@wasmer.io>"]

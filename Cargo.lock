@@ -2885,7 +2885,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-runtime-asml-fork"
-version = "0.16.2"
+version = "0.1.1"
 dependencies = [
  "criterion",
  "lazy_static",
@@ -2914,7 +2914,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-runtime-core-asml-fork"
-version = "0.16.2"
+version = "0.1.1"
 dependencies = [
  "bincode",
  "blake3",

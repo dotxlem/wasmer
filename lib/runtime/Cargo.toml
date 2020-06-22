@@ -1,6 +1,6 @@
 [package]
 name = "wasmer-runtime-asml-fork"
-version = "0.1.0"
+version = "0.1.1"
 description = "Wasmer runtime library"
 license = "MIT"
 authors = ["The Wasmer Engineering Team <engineering@wasmer.io>"]
@@ -15,9 +15,10 @@ wasmer-singlepass-backend = { path = "../singlepass-backend", version = "0.16.2"
 lazy_static = "1.4"
 memmap = "0.7"
 
-[dependencies.wasmer-runtime-core-asml-fork]
+[dependencies.wasmer-runtime-core]
 path = "../runtime-core"
-version = "0.1.0"
+version = "0.1.1"
+package = "wasmer-runtime-core-asml-fork"
 
 [dependencies.wasmer-clif-backend]
 path = "../clif-backend"
@@ -55,7 +56,7 @@ singlepass = ["wasmer-singlepass-backend"]
 default-backend-singlepass = ["singlepass"]
 default-backend-llvm = ["llvm"]
 default-backend-cranelift = ["cranelift"]
-deterministic-execution = ["wasmer-singlepass-backend/deterministic-execution", "wasmer-runtime-core-asml-fork/deterministic-execution"]
+deterministic-execution = ["wasmer-singlepass-backend/deterministic-execution", "wasmer-runtime-core/deterministic-execution"]
 
 [[bench]]
 name = "nginx"

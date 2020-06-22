@@ -11,7 +11,7 @@ license = "MIT"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-wasmer-runtime-core-asml-fork = { version = "0.1.0", path = "../runtime-core" }
+wasmer-runtime-core = { version = "0.1.1", package = "wasmer-runtime-core-asml-fork", path = "../runtime-core" }
 
 [dependencies.wasmer-singlepass-backend]
 path = "../singlepass-backend"
@@ -41,4 +41,4 @@ default-backend-singlepass = ["singlepass"]
 default-backend-llvm = ["llvm"]
 default-backend-cranelift = ["cranelift"]
 
-deterministic-execution = ["wasmer-singlepass-backend/deterministic-execution", "wasmer-runtime-core-asml-fork/deterministic-execution"]
+deterministic-execution = ["wasmer-singlepass-backend/deterministic-execution", "wasmer-runtime-core/deterministic-execution"]

@@ -11,7 +11,7 @@ edition = "2018"
 readme = "README.md"
 
 [dependencies]
-wasmer-runtime-core-asml-fork = { path = "../runtime-core", version = "0.1.0" }
+wasmer-runtime-core = { package = "wasmer-runtime-core-asml-fork", path = "../runtime-core", version = "0.1.1" }
 dynasm = "0.5"
 dynasmrt = "0.5"
 lazy_static = "1.4"
@@ -25,4 +25,4 @@ bincode = "1.2"
 
 [features]
 default = []
-deterministic-execution = ["wasmer-runtime-core-asml-fork/deterministic-execution"]
+deterministic-execution = ["wasmer-runtime-core/deterministic-execution"]
