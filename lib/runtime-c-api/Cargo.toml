@@ -22,7 +22,7 @@ default-features = false
 path = "../api"
 version = "0.16.2"
 
-[dependencies.wasmer-runtime-core]
+[dependencies.wasmer-runtime-core-asml-fork]
 default-features = false
 path = "../runtime-core"
 version = "0.16.2"

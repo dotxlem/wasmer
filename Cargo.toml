@@ -9,7 +9,6 @@ description = "High-Performance WebAssembly JIT interpreter"
 license = "MIT"
 default-run = "wasmer"
 include = [
-    "examples/**/*",
     "src/**/*",
     "Cargo.lock",
     "Cargo.toml",
@@ -30,8 +29,8 @@ structopt = "0.3"
 wabt = { version = "0.9.1", optional = true }
 wasmer = { path = "lib/api", default-features = false }
 wasmer-middleware-common = { path = "lib/middleware-common" }
-wasmer-runtime = { path = "lib/runtime", default-features = false }
-wasmer-runtime-core = { path = "lib/runtime-core" }
+wasmer-runtime-asml-fork = { path = "lib/runtime", default-features = false }
+wasmer-runtime-core-asml-fork = { path = "lib/runtime-core" }
 wasmer-kernel-loader = { path = "lib/kernel-loader", optional = true }
 
 # Backends
@@ -61,9 +60,6 @@ members = [
     "lib/kernel-net",
     "lib/wasi-experimental-io-devices",
     "lib/interface-types",
-    "examples/parallel",
-    "examples/plugin-for-example",
-    "examples/parallel-guest",
     "tests/test-generator",
     "tests/generate-wasi-tests",
     "tests/generate-emscripten-tests",
@@ -99,28 +95,28 @@ default = ["wasi", "wabt"]
 loader-kernel = ["wasmer-kernel-loader"]
 debug = ["fern", "log/max_level_debug", "log/release_max_level_debug"]
 trace = ["fern", "log/max_level_trace", "log/release_max_level_trace"]
-docs = ["wasmer-runtime/docs"]
+docs = ["wasmer-runtime-asml-fork/docs"]
 backend-cranelift = [
     "wasmer-clif-backend",
     "wasmer-clif-backend/generate-debug-information",
-    "wasmer-runtime-core/generate-debug-information",
-    "wasmer-runtime/cranelift",
+    "wasmer-runtime-core-asml-fork/generate-debug-information",
+    "wasmer-runtime-asml-fork/cranelift",
     "wasmer/cranelift",
 ]
 backend-llvm = [
     "wasmer-llvm-backend",
-    "wasmer-runtime/llvm",
-    "wasmer-runtime-core/generate-debug-information-no-export-symbols",
+    "wasmer-runtime-asml-fork/llvm",
+    "wasmer-runtime-core-asml-fork/generate-debug-information-no-export-symbols",
     "wasmer/llvm",
 ]
 backend-singlepass = [
     "wasmer-singlepass-backend",
-    "wasmer-runtime/singlepass",
+    "wasmer-runtime-asml-fork/singlepass",
     "wasmer/singlepass",
 ]
 wasi = ["wasmer-wasi"]
 experimental-io-devices = ["wasmer-wasi-experimental-io-devices"]
-managed = ["backend-singlepass", "wasmer-runtime-core/managed"]
+managed = ["backend-singlepass", "wasmer-runtime-core-asml-fork/managed"]
 
 [[example]]
 name = "plugin"

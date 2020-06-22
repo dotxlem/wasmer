@@ -1167,12 +1167,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 
 [[package]]
-name = "md5"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e6bcd6433cff03a4bfc3d9834d504467db1f1cf6d0ea765d37d330249ed629d"
-
-[[package]]
 name = "memchr"
 version = "2.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1458,24 +1452,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "parallel"
-version = "0.1.0"
-dependencies = [
- "rayon",
- "time",
- "wasmer-runtime",
- "wasmer-runtime-core",
-]
-
-[[package]]
-name = "parallel-guest"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "md5",
-]
-
-[[package]]
 name = "parking_lot"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1560,10 +1536,6 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
 ]
-
-[[package]]
-name = "plugin-for-example"
-version = "0.1.0"
 
 [[package]]
 name = "ppv-lite86"
@@ -2759,7 +2731,7 @@ dependencies = [
  "serde",
  "wasmer-clif-backend",
  "wasmer-llvm-backend",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
  "wasmer-singlepass-backend",
 ]
 
@@ -2793,8 +2765,8 @@ dependencies = [
  "wasmer-kernel-loader",
  "wasmer-llvm-backend",
  "wasmer-middleware-common",
- "wasmer-runtime",
- "wasmer-runtime-core",
+ "wasmer-runtime-asml-fork",
+ "wasmer-runtime-core-asml-fork",
  "wasmer-singlepass-backend",
  "wasmer-wasi",
  "wasmer-wasi-experimental-io-devices",
@@ -2820,7 +2792,7 @@ dependencies = [
  "wasm-debug",
  "wasmer-clif-fork-frontend",
  "wasmer-clif-fork-wasm",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
  "wasmer-win-exception-handler",
  "wasmparser",
  "winapi 0.3.8",
@@ -2863,7 +2835,7 @@ dependencies = [
  "libc",
  "log",
  "time",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
 ]
 
 [[package]]
@@ -2880,7 +2852,7 @@ name = "wasmer-kernel-loader"
 version = "0.1.0"
 dependencies = [
  "libc",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
 ]
 
 [[package]]
@@ -2899,7 +2871,7 @@ dependencies = [
  "semver",
  "smallvec 1.4.0",
  "wabt",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
  "wasmparser",
  "winapi 0.3.8",
 ]
@@ -2908,11 +2880,11 @@ dependencies = [
 name = "wasmer-middleware-common"
 version = "0.16.2"
 dependencies = [
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
 ]
 
 [[package]]
-name = "wasmer-runtime"
+name = "wasmer-runtime-asml-fork"
 version = "0.16.2"
 dependencies = [
  "criterion",
@@ -2924,7 +2896,7 @@ dependencies = [
  "wabt",
  "wasmer-clif-backend",
  "wasmer-llvm-backend",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
  "wasmer-singlepass-backend",
 ]
 
@@ -2936,12 +2908,12 @@ dependencies = [
  "libc",
  "wasmer",
  "wasmer-emscripten",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
  "wasmer-wasi",
 ]
 
 [[package]]
-name = "wasmer-runtime-core"
+name = "wasmer-runtime-core-asml-fork"
 version = "0.16.2"
 dependencies = [
  "bincode",
@@ -2983,7 +2955,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "smallvec 1.4.0",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
 ]
 
 [[package]]
@@ -3001,7 +2973,7 @@ dependencies = [
  "thiserror",
  "time",
  "typetag",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
  "winapi 0.3.8",
 ]
 
@@ -3014,7 +2986,7 @@ dependencies = [
  "ref_thread_local",
  "serde",
  "typetag",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
  "wasmer-wasi",
 ]
 
@@ -3034,7 +3006,7 @@ version = "0.16.2"
 dependencies = [
  "cc",
  "libc",
- "wasmer-runtime-core",
+ "wasmer-runtime-core-asml-fork",
  "winapi 0.3.8",
 ]
 
