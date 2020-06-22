@@ -10,4 +10,4 @@ categories = ["wasm"]
 edition = "2018"
 
 [dependencies]
-wasmer-runtime-core-asml-fork = { path = "../runtime-core", version = "0.16.2" }
+wasmer-runtime-core-asml-fork = { path = "../runtime-core", version = "0.1.0" }

@@ -10,7 +10,7 @@ edition = "2018"
 readme = "README.md"
 
 [dependencies]
-wasmer-runtime-core-asml-fork = { path = "../runtime-core", version = "0.16.2", features = ["generate-debug-information-no-export-symbols"] }
+wasmer-runtime-core-asml-fork = { path = "../runtime-core", version = "0.1.0", features = ["generate-debug-information-no-export-symbols"] }
 wasmparser = "0.51.3"
 smallvec = "1"
 goblin = "0.1"

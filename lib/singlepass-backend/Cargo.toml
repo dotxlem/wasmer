@@ -11,7 +11,7 @@ edition = "2018"
 readme = "README.md"
 
 [dependencies]
-wasmer-runtime-core-asml-fork = { path = "../runtime-core", version = "0.16.2" }
+wasmer-runtime-core-asml-fork = { path = "../runtime-core", version = "0.1.0" }
 dynasm = "0.5"
 dynasmrt = "0.5"
 lazy_static = "1.4"

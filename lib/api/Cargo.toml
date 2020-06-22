@@ -11,7 +11,7 @@ license = "MIT"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-wasmer-runtime-core-asml-fork = { version = "0.16.2", path = "../runtime-core" }
+wasmer-runtime-core-asml-fork = { version = "0.1.0", path = "../runtime-core" }
 
 [dependencies.wasmer-singlepass-backend]
 path = "../singlepass-backend"
