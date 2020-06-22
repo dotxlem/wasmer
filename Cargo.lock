@@ -2730,7 +2730,7 @@ version = "0.16.2"
 dependencies = [
  "serde",
  "wasmer-clif-backend",
- "wasmer-llvm-backend",
+ "wasmer-llvm-backend 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmer-runtime-core-asml-fork",
  "wasmer-singlepass-backend",
 ]
@@ -2763,7 +2763,7 @@ dependencies = [
  "wasmer-clif-backend",
  "wasmer-emscripten",
  "wasmer-kernel-loader",
- "wasmer-llvm-backend",
+ "wasmer-llvm-backend 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmer-middleware-common",
  "wasmer-runtime-asml-fork",
  "wasmer-runtime-core-asml-fork",
@@ -2857,7 +2857,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-llvm-backend"
-version = "0.16.2"
+version = "0.17.0"
 dependencies = [
  "byteorder",
  "cc",
@@ -2872,6 +2872,28 @@ dependencies = [
  "smallvec 1.4.0",
  "wabt",
  "wasmer-runtime-core-asml-fork",
+ "wasmparser",
+ "winapi 0.3.8",
+]
+
+[[package]]
+name = "wasmer-llvm-backend"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25f333ec0316d288091ac2a394cfcc663996fec00733ecde04d1e445a0aa8dfe"
+dependencies = [
+ "byteorder",
+ "cc",
+ "goblin",
+ "inkwell",
+ "lazy_static",
+ "libc",
+ "nix",
+ "regex",
+ "rustc_version",
+ "semver",
+ "smallvec 1.4.0",
+ "wasmer-runtime-core",
  "wasmparser",
  "winapi 0.3.8",
 ]
@@ -2895,7 +2917,7 @@ dependencies = [
  "tempfile",
  "wabt",
  "wasmer-clif-backend",
- "wasmer-llvm-backend",
+ "wasmer-llvm-backend 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmer-runtime-core-asml-fork",
  "wasmer-singlepass-backend",
 ]
@@ -2910,6 +2932,35 @@ dependencies = [
  "wasmer-emscripten",
  "wasmer-runtime-core-asml-fork",
  "wasmer-wasi",
+]
+
+[[package]]
+name = "wasmer-runtime-core"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45d4253f097502423d8b19d54cb18745f61b984b9dbce32424cba7945cfef367"
+dependencies = [
+ "bincode",
+ "blake3",
+ "cc",
+ "digest",
+ "errno",
+ "hex",
+ "indexmap",
+ "lazy_static",
+ "libc",
+ "nix",
+ "page_size",
+ "parking_lot 0.10.2",
+ "rustc_version",
+ "serde",
+ "serde-bench",
+ "serde_bytes",
+ "serde_derive",
+ "smallvec 1.4.0",
+ "target-lexicon",
+ "wasmparser",
+ "winapi 0.3.8",
 ]
 
 [[package]]

@@ -36,7 +36,7 @@ wasmer-kernel-loader = { path = "lib/kernel-loader", optional = true }
 # Backends
 wasmer-singlepass-backend = { path = "lib/singlepass-backend", optional = true }
 wasmer-clif-backend = { path = "lib/clif-backend", optional = true }
-wasmer-llvm-backend = { path = "lib/llvm-backend", optional = true }
+wasmer-llvm-backend = { version = "0.17.0", optional = true }
 
 # Frontends
 wasmer-emscripten = { path = "lib/emscripten" }

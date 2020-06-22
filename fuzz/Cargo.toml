@@ -12,7 +12,7 @@ cargo-fuzz = true
 wasmer-runtime = { path = "../lib/runtime" }
 wasmer-runtime-core = { path = "../lib/runtime-core" }
 wasmer = { path = "../" }
-wasmer-llvm-backend = { path = "../lib/llvm-backend" }
+wasmer-llvm-backend = "0.17.0"
 wasmer-singlepass-backend = { path = "../lib/singlepass-backend" }
 libfuzzer-sys = { git = "https://github.com/rust-fuzz/libfuzzer-sys.git" }
 
