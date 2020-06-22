@@ -29,13 +29,13 @@ structopt = "0.3"
 wabt = { version = "0.9.1", optional = true }
 wasmer = { path = "lib/api", default-features = false }
 wasmer-middleware-common = { path = "lib/middleware-common" }
-wasmer-runtime = { package = "wasmer-runtime-asml-fork", path = "lib/runtime", default-features = false }
-wasmer-runtime-core = { package = "wasmer-runtime-core-asml-fork", path = "lib/runtime-core" }
+wasmer-runtime = { package = "wasmer-runtime-asml-fork", version = "0.1.1", path = "lib/runtime", default-features = false }
+wasmer-runtime-core = { package = "wasmer-runtime-core-asml-fork", version = "0.1.1", path = "lib/runtime-core" }
 wasmer-kernel-loader = { path = "lib/kernel-loader", optional = true }
 
 # Backends
 wasmer-singlepass-backend = { path = "lib/singlepass-backend", optional = true }
-wasmer-clif-backend = { path = "lib/clif-backend", optional = true }
+wasmer-clif-backend = { package = "wasmer-clif-backend-asml-fork", path = "lib/clif-backend", optional = true }
 wasmer-llvm-backend = { version = "0.17.0", optional = true }
 
 # Frontends
@@ -117,13 +117,3 @@ backend-singlepass = [
 wasi = ["wasmer-wasi"]
 experimental-io-devices = ["wasmer-wasi-experimental-io-devices"]
 managed = ["backend-singlepass", "wasmer-runtime-core/managed"]
-
-[[example]]
-name = "plugin"
-required-features = ["wasi", "backend-cranelift"]
-crate-type = ["bin"]
-
-[[example]]
-name = "callback"
-crate-type = ["bin"]
-required-features = ["backend-cranelift"]

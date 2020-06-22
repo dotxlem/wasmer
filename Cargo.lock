@@ -2729,7 +2729,7 @@ name = "wasmer"
 version = "0.16.2"
 dependencies = [
  "serde",
- "wasmer-clif-backend",
+ "wasmer-clif-backend-asml-fork",
  "wasmer-llvm-backend 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmer-runtime-core-asml-fork",
  "wasmer-singlepass-backend",
@@ -2760,7 +2760,7 @@ dependencies = [
  "typetag",
  "wabt",
  "wasmer",
- "wasmer-clif-backend",
+ "wasmer-clif-backend-asml-fork",
  "wasmer-emscripten",
  "wasmer-kernel-loader",
  "wasmer-llvm-backend 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2774,8 +2774,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasmer-clif-backend"
-version = "0.16.2"
+name = "wasmer-clif-backend-asml-fork"
+version = "0.1.0"
 dependencies = [
  "byteorder",
  "cranelift-codegen",
@@ -2916,7 +2916,7 @@ dependencies = [
  "serde_derive",
  "tempfile",
  "wabt",
- "wasmer-clif-backend",
+ "wasmer-clif-backend-asml-fork",
  "wasmer-llvm-backend 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmer-runtime-core-asml-fork",
  "wasmer-singlepass-backend",
