@@ -1,411 +1,371 @@
-#![deny(
-    dead_code,
-//    missing_docs,
-    nonstandard_style,
-    unused_imports,
-    unused_mut,
-    unused_variables,
-    unused_unsafe,
-    unreachable_patterns
+#![doc(
+    html_logo_url = "https://github.com/wasmerio.png?size=200",
+    html_favicon_url = "https://wasmer.io/static/icons/favicon.ico"
 )]
-// Aspirational. I hope to have no unsafe code in this crate.
-#![forbid(unsafe_code)]
-#![doc(html_favicon_url = "https://wasmer.io/static/icons/favicon.ico")]
-#![doc(html_logo_url = "https://avatars3.githubusercontent.com/u/44205449?s=200&v=4")]
+#![deny(
+    missing_docs,
+    trivial_numeric_casts,
+    unused_extern_crates,
+    broken_intra_doc_links
+)]
+#![warn(unused_import_braces)]
+#![cfg_attr(
+    feature = "cargo-clippy",
+    allow(clippy::new_without_default, vtable_address_comparisons)
+)]
+#![cfg_attr(
+    feature = "cargo-clippy",
+    warn(
+        clippy::float_arithmetic,
+        clippy::mut_mut,
+        clippy::nonminimal_bool,
+        clippy::option_map_unwrap_or,
+        clippy::option_map_unwrap_or_else,
+        clippy::print_stdout,
+        clippy::unicode_not_nfc,
+        clippy::use_self
+    )
+)]
 
-//! TODO: Write high value, high-level API intro docs here
-//! Intro/background information
+//! This crate contains the `wasmer` API. The `wasmer` API facilitates the efficient,
+//! sandboxed execution of [WebAssembly (Wasm)][wasm] modules.
 //!
-//! quick links to places in this document/other crates/standards etc.
+//! Here's an example of the `wasmer` API in action:
+//! ```
+//! use wasmer::{Store, Module, Instance, Value, imports};
 //!
-//! example code, link to projects using it
+//! fn main() -> anyhow::Result<()> {
+//!     let module_wat = r#"
+//!     (module
+//!     (type $t0 (func (param i32) (result i32)))
+//!     (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+//!         get_local $p0
+//!         i32.const 1
+//!         i32.add))
+//!     "#;
 //!
-//! more info, what to do if you run into problems
+//!     let store = Store::default();
+//!     let module = Module::new(&store, &module_wat)?;
+//!     // The module doesn't import anything, so we create an empty import object.
+//!     let import_object = imports! {};
+//!     let instance = Instance::new(&module, &import_object)?;
+//!
+//!     let add_one = instance.exports.get_function("add_one")?;
+//!     let result = add_one.call(&[Value::I32(42)])?;
+//!     assert_eq!(result[0], Value::I32(43));
+//!
+//!     Ok(())
+//! }
+//! ```
+//!
+//! For more examples of using the `wasmer` API, check out the
+//! [wasmer examples][wasmer-examples].
+//!
+//! ---------
+//!
+//! # Table of Contents
+//!
+//! - [Wasm Primitives](#wasm-primitives)
+//!   - [Externs](#externs)
+//!     - [Functions](#functions)
+//!     - [Memories](#memories)
+//!     - [Globals](#globals)
+//!     - [Tables](#tables)
+//! - [Project Layout](#project-layout)
+//!   - [Engines](#engines)
+//!   - [Compilers](#compilers)
+//! - [Features](#features)
+//!
+//!
+//! # Wasm Primitives
+//! In order to make use of the power of the `wasmer` API, it's important
+//! to understand the primitives around which the API is built.
+//!
+//! Wasm only deals with a small number of core data types, these data
+//! types can be found in the [`Value`] type.
+//!
+//! In addition to the core Wasm types, the core types of the API are
+//! referred to as "externs".
+//!
+//! ## Externs
+//! An [`Extern`] is a type that can be imported or exported from a Wasm
+//! module.
+//!
+//! To import an extern, simply give it a namespace and a name with the
+//! [`imports`] macro:
+//!
+//! ```
+//! # use wasmer::{imports, Function, Memory, MemoryType, Store, ImportObject};
+//! # fn imports_example(store: &Store) -> ImportObject {
+//! let memory = Memory::new(&store, MemoryType::new(1, None, false)).unwrap();
+//! imports! {
+//!     "env" => {
+//!          "my_function" => Function::new_native(store, || println!("Hello")),
+//!          "memory" => memory,
+//!     }
+//! }
+//! # }
+//! ```
+//!
+//! And to access an exported extern, see the [`Exports`] API, accessible
+//! from any instance via `instance.exports`:
+//!
+//! ```
+//! # use wasmer::{imports, Instance, Function, Memory, NativeFunc};
+//! # fn exports_example(instance: &Instance) -> anyhow::Result<()> {
+//! let memory = instance.exports.get_memory("memory")?;
+//! let memory: &Memory = instance.exports.get("some_other_memory")?;
+//! let add: NativeFunc<(i32, i32), i32> = instance.exports.get_native_function("add")?;
+//! let result = add.call(5, 37)?;
+//! assert_eq!(result, 42);
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! These are the primary types that the `wasmer` API uses.
+//!
+//! ### Functions
+//! There are 2 types of functions in `wasmer`:
+//! 1. Wasm functions
+//! 2. Host functions
+//!
+//! A Wasm function is a function defined in a WebAssembly module that can
+//! only perform computation without side effects and call other functions.
+//!
+//! Wasm functions take 0 or more arguments and return 0 or more results.
+//! Wasm functions can only deal with the primitive types defined in
+//! [`Value`].
+//!
+//! A Host function is any function implemented on the host, in this case in
+//! Rust.
+//!
+//! Host functions can optionally be created with an environment that
+//! implements [`WasmerEnv`]. This environment is useful for maintaining
+//! host state (for example the filesystem in WASI).
+//!
+//! Thus WebAssembly modules by themselves cannot do anything but computation
+//! on the core types in [`Value`]. In order to make them more useful we
+//! give them access to the outside world with [`imports`].
+//!
+//! If you're looking for a sandboxed, POSIX-like environment to execute Wasm
+//! in, check out the [`wasmer-wasi`][wasmer-wasi] crate for our implementation of WASI,
+//! the WebAssembly System Interface.
+//!
+//! In the `wasmer` API we support functions which take their arguments and
+//! return their results dynamically, [`Function`], and functions which
+//! take their arguments and return their results statically, [`NativeFunc`].
+//!
+//! ### Memories
+//! Memories store data.
+//!
+//! In most Wasm programs, nearly all data will live in a [`Memory`].
+//!
+//! This data can be shared between the host and guest to allow for more
+//! interesting programs.
+//!
+//! ### Globals
+//! A [`Global`] is a type that may be either mutable or immutable, and
+//! contains one of the core Wasm types defined in [`Value`].
+//!
+//! ### Tables
+//! A [`Table`] is an indexed list of items.
+//!
+//!
+//! ## Project Layout
+//!
+//! The Wasmer project is divided into a number of crates, below is a dependency
+//! graph with transitive dependencies removed.
+//!
+//! <div>
+//! <img src="https://raw.githubusercontent.com/wasmerio/wasmer/master/docs/deps_dedup.svg" />
+//! </div>
+//!
+//! While this crate is the top level API, we also publish crates built
+//! on top of this API that you may be interested in using, including:
+//!
+//! - [wasmer-cache][] for caching compiled Wasm modules.
+//! - [wasmer-emscripten][] for running Wasm modules compiled to the
+//!   Emscripten ABI.
+//! - [wasmer-wasi][] for running Wasm modules compiled to the WASI ABI.
+//!
+//! --------
+//!
+//! The Wasmer project has two major abstractions:
+//! 1. [Engines][wasmer-engine]
+//! 2. [Compilers][wasmer-compiler]
+//!
+//! These two abstractions have multiple options that can be enabled
+//! with features.
+//!
+//! ### Engines
+//!
+//! An engine is a system that uses a compiler to make a WebAssembly
+//! module executable.
+//!
+//! ### Compilers
+//!
+//! A compiler is a system that handles the details of making a Wasm
+//! module executable. For example, by generating native machine code
+//! for each Wasm function.
+//!
+//!
+//! ## Features
+//!
+//! This crate's features can be broken down into 2 kinds, features that
+//! enable new functionality and features that set defaults.
+//!
+//! The features that enable new functionality are:
+//! - `jit` - enable the JIT engine. (See [wasmer-jit][])
+//! - `native` - enable the native engine. (See [wasmer-native][])
+//! - `cranelift` - enable Wasmer's Cranelift compiler. (See [wasmer-cranelift][])
+//! - `llvm` - enable Wasmer's LLVM compiler. (See [wasmer-llvm][])
+//! - `singlepass` - enable Wasmer's Singlepass compiler. (See [wasmer-singlepass][])
+//! - `wat` - enable `wasmer` to parse the WebAssembly text format.
+//!
+//! The features that set defaults come in sets that are mutually exclusive.
+//!
+//! The first set is the default compiler set:
+//! - `default-cranelift` - set Wasmer's Cranelift compiler as the default.
+//! - `default-llvm` - set Wasmer's LLVM compiler as the default.
+//! - `default-singlepass` - set Wasmer's Singlepass compiler as the default.
+//!
+//! The next set is the default engine set:
+//! - `default-jit` - set the JIT engine as the default.
+//! - `default-native` - set the native engine as the default.
+//!
+//! --------
+//!
+//! By default the `wat`, `default-cranelift`, and `default-jit` features
+//! are enabled.
+//!
+//!
+//!
+//! [wasm]: https://webassembly.org/
+//! [wasmer-examples]: https://github.com/wasmerio/wasmer/tree/master/examples
+//! [wasmer-cache]: https://docs.rs/wasmer-cache/*/wasmer_cache/
+//! [wasmer-compiler]: https://docs.rs/wasmer-compiler/*/wasmer_compiler/
+//! [wasmer-cranelift]: https://docs.rs/wasmer-cranelift/*/wasmer_cranelift/
+//! [wasmer-emscripten]: https://docs.rs/wasmer-emscripten/*/wasmer_emscripten/
+//! [wasmer-engine]: https://docs.rs/wasmer-engine/*/wasmer_engine/
+//! [wasmer-jit]: https://docs.rs/wasmer-jit/*/wasmer_jit/
+//! [wasmer-native]: https://docs.rs/wasmer-native/*/wasmer_native/
+//! [wasmer-singlepass]: https://docs.rs/wasmer-singlepass/*/wasmer_singlepass/
+//! [wasmer-llvm]: https://docs.rs/wasmer-llvm/*/wasmer_llvm/
+//! [wasmer-wasi]: https://docs.rs/wasmer-wasi/*/wasmer_wasi/
 
-#[macro_use]
-extern crate serde;
+mod env;
+mod exports;
+mod externals;
+mod import_object;
+mod instance;
+mod module;
+mod native;
+mod ptr;
+mod store;
+mod tunables;
+mod types;
+mod utils;
 
-pub use crate::module::*;
-pub use wasmer_runtime_core::instance::{DynFunc, Instance};
-pub use wasmer_runtime_core::memory::Memory;
-pub use wasmer_runtime_core::table::Table;
-pub use wasmer_runtime_core::typed_func::DynamicFunc;
-pub use wasmer_runtime_core::Func;
-pub use wasmer_runtime_core::{func, imports};
+/// Implement [`WasmerEnv`] for your type with `#[derive(WasmerEnv)]`.
+///
+/// See the [`WasmerEnv`] trait for more information.
+pub use wasmer_derive::WasmerEnv;
 
-pub mod module {
-    //! Types and functions for WebAssembly modules.
-    //!
-    //! # Usage
-    //! ## Create a Module
-    //!
-    //! ```
-    //! ```
-    //!
-    //! ## Get the exports from a Module
-    //! ```
-    //! # use wasmer::*;
-    //! # fn get_exports(module: &Module) {
-    //! let exports: Vec<ExportDescriptor> = module.exports().collect();
-    //! # }
-    //! ```
-    // TODO: verify that this is the type we want to export, with extra methods on it
-    pub use wasmer_runtime_core::module::Module;
-    // should this be in here?
-    pub use wasmer_runtime_core::types::{ExportDescriptor, ExternDescriptor, ImportDescriptor};
-    // TODO: implement abstract module API
+#[doc(hidden)]
+pub mod internals {
+    //! We use the internals module for exporting types that are only
+    //! intended to use in internal crates such as the compatibility crate
+    //! `wasmer-vm`. Please don't use any of this types directly, as
+    //! they might change frequently or be removed in the future.
+
+    #[cfg(feature = "deprecated")]
+    pub use crate::externals::{UnsafeMutableEnv, WithUnsafeMutableEnv};
+    pub use crate::externals::{WithEnv, WithoutEnv};
 }
 
-pub mod memory {
-    //! Types and functions for Wasm linear memory.
-    pub use wasmer_runtime_core::memory::{Atomically, Memory, MemoryView};
-}
+pub use crate::env::{HostEnvInitError, LazyInit, WasmerEnv};
+pub use crate::exports::{ExportError, Exportable, Exports, ExportsIterator};
+pub use crate::externals::{
+    Extern, FromToNativeWasmType, Function, Global, HostFunction, Memory, Table, WasmTypeList,
+};
+pub use crate::import_object::{ImportObject, ImportObjectIterator, LikeNamespace};
+pub use crate::instance::{Instance, InstantiationError};
+pub use crate::module::Module;
+pub use crate::native::NativeFunc;
+pub use crate::ptr::{Array, Item, WasmPtr};
+pub use crate::store::{Store, StoreObject};
+pub use crate::tunables::BaseTunables;
+pub use crate::types::{
+    ExportType, ExternRef, ExternType, FunctionType, GlobalType, HostInfo, HostRef, ImportType,
+    MemoryType, Mutability, TableType, Val, ValType,
+};
+pub use crate::types::{Val as Value, ValType as Type};
+pub use crate::utils::is_wasm;
+pub use target_lexicon::{Architecture, CallingConvention, OperatingSystem, Triple, HOST};
+#[cfg(feature = "compiler")]
+pub use wasmer_compiler::{
+    wasmparser, CompilerConfig, FunctionMiddleware, MiddlewareError, MiddlewareReaderState,
+    ModuleMiddleware,
+};
+pub use wasmer_compiler::{
+    CompileError, CpuFeature, Features, ParseCpuFeatureError, Target, WasmError, WasmResult,
+};
+pub use wasmer_engine::{
+    ChainableNamedResolver, DeserializeError, Engine, Export, FrameInfo, LinkError, NamedResolver,
+    NamedResolverChain, Resolver, RuntimeError, SerializeError, Tunables,
+};
+pub use wasmer_types::{
+    Atomically, Bytes, ExportIndex, GlobalInit, LocalFunctionIndex, MemoryView, Pages, ValueType,
+    WASM_MAX_PAGES, WASM_MIN_PAGES, WASM_PAGE_SIZE,
+};
 
-pub mod wasm {
-    //! Various types exposed by the Wasmer Runtime relating to Wasm.
-    //!
-    //! TODO: Add index with links to sub sections
-    //
-    //! # Globals
-    //!
-    //! # Tables
-    pub use wasmer_runtime_core::backend::Features;
-    pub use wasmer_runtime_core::export::Export;
-    pub use wasmer_runtime_core::global::Global;
-    pub use wasmer_runtime_core::instance::{DynFunc, Instance};
-    pub use wasmer_runtime_core::memory::Memory;
-    pub use wasmer_runtime_core::module::Module;
-    pub use wasmer_runtime_core::table::Table;
-    pub use wasmer_runtime_core::types::{ExportDescriptor, ExternDescriptor, ImportDescriptor};
-    pub use wasmer_runtime_core::types::{
-        FuncSig, GlobalDescriptor, MemoryDescriptor, TableDescriptor, Type, Value,
-    };
-    pub use wasmer_runtime_core::Func;
-}
-
+// TODO: should those be moved into wasmer::vm as well?
+pub use wasmer_vm::{raise_user_trap, MemoryError, VMExport};
 pub mod vm {
-    //! Various types exposed by the Wasmer Runtime relating to the VM.
-    pub use wasmer_runtime_core::vm::Ctx;
-}
+    //! The vm module re-exports wasmer-vm types.
 
-pub mod compiler {
-    //! Types and functions for compiling wasm;
-    use crate::module::Module;
-    pub use wasmer_runtime_core::backend::{
-        BackendCompilerConfig, Compiler, CompilerConfig, Features,
-    };
-    pub use wasmer_runtime_core::compile_with;
-    #[cfg(unix)]
-    pub use wasmer_runtime_core::fault::{pop_code_version, push_code_version};
-    pub use wasmer_runtime_core::state::CodeVersion;
-
-    /// Enum used to select which compiler should be used to generate code.
-    #[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq, Eq)]
-    pub enum Backend {
-        #[cfg(feature = "singlepass")]
-        /// Singlepass backend
-        Singlepass,
-        #[cfg(feature = "cranelift")]
-        /// Cranelift backend
-        Cranelift,
-        #[cfg(feature = "llvm")]
-        /// LLVM backend
-        LLVM,
-        /// Auto backend
-        Auto,
-    }
-
-    impl Backend {
-        /// Get a list of the currently enabled (via feature flag) backends.
-        pub fn variants() -> &'static [&'static str] {
-            &[
-                #[cfg(feature = "singlepass")]
-                "singlepass",
-                #[cfg(feature = "cranelift")]
-                "cranelift",
-                #[cfg(feature = "llvm")]
-                "llvm",
-                "auto",
-            ]
-        }
-
-        /// Stable string representation of the backend.
-        /// It can be used as part of a cache key, for example.
-        pub fn to_string(&self) -> &'static str {
-            match self {
-                #[cfg(feature = "singlepass")]
-                Backend::Singlepass => "singlepass",
-                #[cfg(feature = "cranelift")]
-                Backend::Cranelift => "cranelift",
-                #[cfg(feature = "llvm")]
-                Backend::LLVM => "llvm",
-                Backend::Auto => "auto",
-            }
-        }
-    }
-
-    impl Default for Backend {
-        fn default() -> Self {
-            #[cfg(all(feature = "default-backend-singlepass", not(feature = "docs")))]
-            return Backend::Singlepass;
-
-            #[cfg(any(feature = "default-backend-cranelift", feature = "docs"))]
-            return Backend::Cranelift;
-
-            #[cfg(all(feature = "default-backend-llvm", not(feature = "docs")))]
-            return Backend::LLVM;
-        }
-    }
-
-    impl std::str::FromStr for Backend {
-        type Err = String;
-        fn from_str(s: &str) -> Result<Backend, String> {
-            match s.to_lowercase().as_str() {
-                #[cfg(feature = "singlepass")]
-                "singlepass" => Ok(Backend::Singlepass),
-                #[cfg(feature = "cranelift")]
-                "cranelift" => Ok(Backend::Cranelift),
-                #[cfg(feature = "llvm")]
-                "llvm" => Ok(Backend::LLVM),
-                "auto" => Ok(Backend::Auto),
-                _ => Err(format!("The backend {} doesn't exist", s)),
-            }
-        }
-    }
-
-    /// Compile WebAssembly binary code into a [`Module`].
-    /// This function is useful if it is necessary to
-    /// compile a module before it can be instantiated
-    /// (otherwise, the [`instantiate`] function should be used).
-    ///
-    /// [`Module`]: struct.Module.html
-    /// [`instantiate`]: fn.instantiate.html
-    ///
-    /// # Params:
-    /// * `wasm`: A `&[u8]` containing the
-    ///   binary code of the wasm module you want to compile.
-    /// # Errors:
-    /// If the operation fails, the function returns `Err(error::CompileError::...)`.
-    pub fn compile(wasm: &[u8]) -> crate::error::CompileResult<Module> {
-        wasmer_runtime_core::compile_with(&wasm[..], &default_compiler())
-    }
-
-    /// The same as `compile` but takes a `CompilerConfig` for the purpose of
-    /// changing the compiler's behavior
-    pub fn compile_with_config(
-        wasm: &[u8],
-        compiler_config: CompilerConfig,
-    ) -> crate::error::CompileResult<Module> {
-        wasmer_runtime_core::compile_with_config(&wasm[..], &default_compiler(), compiler_config)
-    }
-
-    /// The same as `compile_with_config` but takes a `Compiler` for the purpose of
-    /// changing the backend.
-    pub fn compile_with_config_with(
-        wasm: &[u8],
-        compiler_config: CompilerConfig,
-        compiler: &dyn Compiler,
-    ) -> crate::error::CompileResult<Module> {
-        wasmer_runtime_core::compile_with_config(&wasm[..], compiler, compiler_config)
-    }
-
-    /// Copied from runtime core; TODO: figure out what we want to do here
-    pub fn default_compiler() -> impl Compiler {
-        #[cfg(any(
-            all(
-                feature = "default-backend-llvm",
-                not(feature = "docs"),
-                any(
-                    feature = "default-backend-cranelift",
-                    feature = "default-backend-singlepass"
-                )
-            ),
-            all(
-                not(feature = "docs"),
-                feature = "default-backend-cranelift",
-                feature = "default-backend-singlepass"
-            )
-        ))]
-        compile_error!(
-            "The `default-backend-X` features are mutually exclusive.  Please choose just one"
-        );
-
-        #[cfg(all(feature = "default-backend-llvm", not(feature = "docs")))]
-        use wasmer_llvm_backend::LLVMCompiler as DefaultCompiler;
-
-        #[cfg(all(feature = "default-backend-singlepass", not(feature = "docs")))]
-        use wasmer_singlepass_backend::SinglePassCompiler as DefaultCompiler;
-
-        #[cfg(any(feature = "default-backend-cranelift", feature = "docs"))]
-        use wasmer_clif_backend::CraneliftCompiler as DefaultCompiler;
-
-        DefaultCompiler::new()
-    }
-
-    /// Get the `Compiler` as a trait object for the given `Backend`.
-    /// Returns `Option` because support for the requested `Compiler` may
-    /// not be enabled by feature flags.
-    ///
-    /// To get a list of the enabled backends as strings, call `Backend::variants()`.
-    pub fn compiler_for_backend(backend: Backend) -> Option<Box<dyn Compiler>> {
-        match backend {
-            #[cfg(feature = "cranelift")]
-            Backend::Cranelift => Some(Box::new(wasmer_clif_backend::CraneliftCompiler::new())),
-
-            #[cfg(any(feature = "singlepass"))]
-            Backend::Singlepass => Some(Box::new(
-                wasmer_singlepass_backend::SinglePassCompiler::new(),
-            )),
-
-            #[cfg(feature = "llvm")]
-            Backend::LLVM => Some(Box::new(wasmer_llvm_backend::LLVMCompiler::new())),
-
-            Backend::Auto => {
-                #[cfg(feature = "default-backend-singlepass")]
-                return Some(Box::new(
-                    wasmer_singlepass_backend::SinglePassCompiler::new(),
-                ));
-                #[cfg(feature = "default-backend-cranelift")]
-                return Some(Box::new(wasmer_clif_backend::CraneliftCompiler::new()));
-                #[cfg(feature = "default-backend-llvm")]
-                return Some(Box::new(wasmer_llvm_backend::LLVMCompiler::new()));
-            }
-        }
-    }
-}
-
-pub mod codegen {
-    //! Types and functions for generating native code.
-    pub use wasmer_runtime_core::codegen::ModuleCodeGenerator;
-}
-
-// TODO: `import` or `imports`?
-pub mod import {
-    //! Types and functions for Wasm imports.
-    pub use wasmer_runtime_core::import::{
-        ImportObject, ImportObjectIterator, LikeNamespace, Namespace,
-    };
-    pub use wasmer_runtime_core::types::{ExternDescriptor, ImportDescriptor};
-    pub use wasmer_runtime_core::{func, imports};
-}
-
-pub mod export {
-    //! Types and functions for Wasm exports.
-    pub use wasmer_runtime_core::export::Export;
-    pub use wasmer_runtime_core::types::{ExportDescriptor, ExternDescriptor};
-}
-
-pub mod units {
-    //! Various unit types.
-    pub use wasmer_runtime_core::units::{Bytes, Pages};
-}
-
-pub mod types {
-    //! Types used in the Wasm runtime and conversion functions.
-    pub use wasmer_runtime_core::types::{
-        ElementType, FuncDescriptor, FuncSig, GlobalDescriptor, GlobalInit, MemoryDescriptor,
-        TableDescriptor, Type, Value, ValueType,
+    pub use wasmer_vm::{
+        Memory, MemoryError, MemoryStyle, Table, TableStyle, VMMemoryDefinition, VMTableDefinition,
     };
 }
 
-pub mod error {
-    //! Various error types returned by Wasmer APIs.
-    pub use wasmer_runtime_core::backend::ExceptionCode;
-    pub use wasmer_runtime_core::error::{
-        CallError, CompileError, CompileResult, CreationError, Error, LinkError, ResolveError,
-        RuntimeError,
-    };
+#[cfg(feature = "wat")]
+pub use wat::parse_bytes as wat2wasm;
 
-    #[derive(Debug)]
-    pub enum CompileFromFileError {
-        CompileError(CompileError),
-        IoError(std::io::Error),
-    }
+// The compilers are mutually exclusive
+#[cfg(any(
+    all(
+        feature = "default-llvm",
+        any(feature = "default-cranelift", feature = "default-singlepass")
+    ),
+    all(feature = "default-cranelift", feature = "default-singlepass")
+))]
+compile_error!(
+    r#"The `default-singlepass`, `default-cranelift` and `default-llvm` features are mutually exclusive.
+If you wish to use more than one compiler, you can simply create the own store. Eg.:
 
-    impl std::fmt::Display for CompileFromFileError {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            match self {
-                CompileFromFileError::CompileError(ce) => write!(f, "{}", ce),
-                CompileFromFileError::IoError(ie) => write!(f, "{}", ie),
-            }
-        }
-    }
+```
+use wasmer::{Store, JIT, Singlepass};
 
-    impl std::error::Error for CompileFromFileError {
-        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-            match self {
-                CompileFromFileError::CompileError(ce) => Some(ce),
-                CompileFromFileError::IoError(ie) => Some(ie),
-            }
-        }
-    }
+let engine = JIT::new(Singlepass::default()).engine();
+let store = Store::new(&engine);
+```"#
+);
 
-    impl From<CompileError> for CompileFromFileError {
-        fn from(other: CompileError) -> Self {
-            CompileFromFileError::CompileError(other)
-        }
-    }
-    impl From<std::io::Error> for CompileFromFileError {
-        fn from(other: std::io::Error) -> Self {
-            CompileFromFileError::IoError(other)
-        }
-    }
-}
+#[cfg(feature = "singlepass")]
+pub use wasmer_compiler_singlepass::Singlepass;
 
-/// Idea for generic trait; consider rename; it will need to be moved somewhere else
-pub trait CompiledModule {
-    fn new(bytes: impl AsRef<[u8]>) -> error::CompileResult<Module>;
-    fn new_with_compiler(
-        bytes: impl AsRef<[u8]>,
-        compiler: Box<dyn compiler::Compiler>,
-    ) -> error::CompileResult<Module>;
-    fn from_binary(bytes: impl AsRef<[u8]>) -> error::CompileResult<Module>;
-    fn from_binary_unchecked(bytes: impl AsRef<[u8]>) -> error::CompileResult<Module>;
-    fn from_file(file: impl AsRef<std::path::Path>) -> Result<Module, error::CompileFromFileError>;
+#[cfg(feature = "cranelift")]
+pub use wasmer_compiler_cranelift::{Cranelift, CraneliftOptLevel};
 
-    fn validate(bytes: impl AsRef<[u8]>) -> error::CompileResult<()>;
-}
+#[cfg(feature = "llvm")]
+pub use wasmer_compiler_llvm::{LLVMOptLevel, LLVM};
 
-// this implementation should be moved
-impl CompiledModule for Module {
-    fn new(bytes: impl AsRef<[u8]>) -> error::CompileResult<Module> {
-        let bytes = bytes.as_ref();
-        wasmer_runtime_core::compile_with(bytes, &compiler::default_compiler())
-    }
+#[cfg(feature = "jit")]
+pub use wasmer_engine_jit::{JITArtifact, JITEngine, JIT};
 
-    fn new_with_compiler(
-        bytes: impl AsRef<[u8]>,
-        compiler: Box<dyn compiler::Compiler>,
-    ) -> error::CompileResult<Module> {
-        let bytes = bytes.as_ref();
-        wasmer_runtime_core::compile_with(bytes, &*compiler)
-    }
+#[cfg(feature = "native")]
+pub use wasmer_engine_native::{Native, NativeArtifact, NativeEngine};
 
-    fn from_binary(bytes: impl AsRef<[u8]>) -> error::CompileResult<Module> {
-        let bytes = bytes.as_ref();
-        wasmer_runtime_core::compile_with(bytes, &compiler::default_compiler())
-    }
-
-    fn from_binary_unchecked(bytes: impl AsRef<[u8]>) -> error::CompileResult<Module> {
-        // TODO: optimize this
-        Self::from_binary(bytes)
-    }
-
-    fn from_file(file: impl AsRef<std::path::Path>) -> Result<Module, error::CompileFromFileError> {
-        use std::fs;
-        use std::io::Read;
-        let path = file.as_ref();
-        let mut f = fs::File::open(path)?;
-        // TODO: ideally we can support a streaming compilation API and not have to read in the entire file
-        let mut bytes = vec![];
-        f.read_to_end(&mut bytes)?;
-
-        Ok(Module::from_binary(bytes.as_slice())?)
-    }
-
-    fn validate(bytes: impl AsRef<[u8]>) -> error::CompileResult<()> {
-        // TODO: optimize this
-        let _ = Self::from_binary(bytes)?;
-        Ok(())
-    }
-}
+/// Version number of this crate.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");

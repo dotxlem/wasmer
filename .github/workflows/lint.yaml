@@ -1,0 +1,29 @@
+on:
+  push:
+    branches:
+      - '**'
+      - '!master'
+
+name: lint
+
+env:
+  RUST_BACKTRACE: 1
+
+jobs:
+  lint:
+    name: Code lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: 1.48.0
+          override: true
+          components: rustfmt, clippy
+      - run: make lint
+      - name: Assert no files have changed
+        run: |
+          git status
+          ! [[ $(git status -s) ]]

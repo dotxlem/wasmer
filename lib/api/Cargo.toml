@@ -1,45 +1,100 @@
 [package]
 name = "wasmer"
-version = "0.16.2"
-authors = ["The Wasmer Engineering Team <engineering@wasmer.io>"]
-edition = "2018"
-publish = true
-description = "The high-level public API of the Wasmer WebAssembly runtime"
+version = "1.0.1"
+description = "High-performant WebAssembly runtime"
+categories = ["wasm"]
+keywords = ["wasm", "webassembly", "runtime", "vm"]
+authors = ["Wasmer Engineering Team <engineering@wasmer.io>"]
+repository = "https://github.com/wasmerio/wasmer"
 license = "MIT"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+readme = "README.md"
+edition = "2018"
 
 [dependencies]
-serde = { version = "1", features = ["derive"] }
-wasmer-runtime-core = { version = "0.1.1", package = "wasmer-runtime-core-asml-fork", path = "../runtime-core" }
+wasmer-vm = { path = "../vm", version = "1.0.1" }
+wasmer-compiler-singlepass = { path = "../compiler-singlepass", version = "1.0.1", optional = true }
+wasmer-compiler-cranelift = { path = "../compiler-cranelift", version = "1.0.1", optional = true }
+wasmer-compiler-llvm = { path = "../compiler-llvm", version = "1.0.1", optional = true }
+wasmer-compiler = { path = "../compiler", version = "1.0.1" }
+wasmer-derive = { path = "../derive", version = "1.0.1" }
+wasmer-engine = { path = "../engine", version = "1.0.1" }
+wasmer-engine-jit = { path = "../engine-jit", version = "1.0.1", optional = true }
+wasmer-engine-native = { path = "../engine-native", version = "1.0.1", optional = true }
+wasmer-types = { path = "../wasmer-types", version = "1.0.1" }
+indexmap = { version = "1.4", features = ["serde-1"] }
+cfg-if = "0.1"
+wat = { version = "1.0", optional = true }
+thiserror = "1.0"
+more-asserts = "0.2"
+target-lexicon = { version = "0.11", default-features = false }
 
-[dependencies.wasmer-singlepass-backend]
-path = "../singlepass-backend"
-version = "0.16.2"
-optional = true
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = "0.3"
 
-[dependencies.wasmer-llvm-backend]
-version = "0.17.0"
-optional = true
+[dev-dependencies]
+# for the binary wasmer.rs
+libc = { version = "^0.2", default-features = false }
+wat = "1.0"
+tempfile = "3.1"
+anyhow = "1.0"
 
-[dependencies.wasmer-clif-backend]
-package = "wasmer-clif-backend-asml-fork"
-path = "../clif-backend"
-version = "0.1.0"
-optional = true
+[badges]
+maintenance = { status = "actively-developed" }
 
 [features]
-# Note: we should have default backends depending on the architecture
-# This target-directed-features is available in nightly
-# https://github.com/rust-lang/cargo/issues/7914
-default = ["cranelift", "default-backend-cranelift"]
+default = ["wat", "default-cranelift", "default-jit"]
+compiler = [
+    "wasmer-engine-jit/compiler",
+    "wasmer-engine-native/compiler",
+]
+engine = []
+jit = [
+    "wasmer-engine-jit",
+    "engine"
+]
+native = [
+    "wasmer-engine-native",
+    "engine"
+]
+singlepass = [
+    "wasmer-compiler-singlepass",
+    "compiler",
+]
+cranelift = [
+    "wasmer-compiler-cranelift",
+    "compiler",
+]
+# Enable Cranelift experimental x64 backend
+cranelift-experimental-x64 = [
+    "cranelift",
+    "wasmer-compiler-cranelift/experimental-x64",
+]
+llvm = [
+    "wasmer-compiler-llvm",
+    "compiler",
+]
+# enables internal features used by the deprecated API.
+deprecated = []
+default-compiler = []
+default-engine = []
 
-singlepass = ["wasmer-singlepass-backend"]
-llvm = ["wasmer-llvm-backend"]
-cranelift = ["wasmer-clif-backend"]
-
-default-backend-singlepass = ["singlepass"]
-default-backend-llvm = ["llvm"]
-default-backend-cranelift = ["cranelift"]
-
-deterministic-execution = ["wasmer-singlepass-backend/deterministic-execution", "wasmer-runtime-core/deterministic-execution"]
+default-singlepass = [
+    "singlepass",
+    "default-compiler"
+]
+default-cranelift = [
+    "cranelift",
+    "default-compiler"
+]
+default-llvm = [
+    "llvm",
+    "default-compiler"
+]
+default-jit = [
+    "jit",
+    "default-engine"
+]
+default-native = [
+    "native",
+    "default-engine"
+]

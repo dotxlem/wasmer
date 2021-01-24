@@ -1,21 +1,22 @@
 [package]
 name = "wasmer-wasi-experimental-io-devices"
-version = "0.16.2"
-authors = ["The Wasmer Engineering Team <engineering@wasmer.io>"]
-edition = "2018"
-repository = "https://github.com/wasmerio/wasmer"
-publish = true
+version = "1.0.1"
 description = "An experimental non-standard WASI extension for graphics"
+categories = ["wasm"]
+keywords = ["wasm", "webassembly", "types"]
+authors = ["Wasmer Engineering Team <engineering@wasmer.io>"]
+repository = "https://github.com/wasmerio/wasmer"
 license = "MIT"
+readme = "README.md"
+edition = "2018"
 
 [badges]
 maintenance = { status = "experimental" }
 
 [dependencies]
-log = "0.4"
-minifb = "0.13"
-wasmer-wasi = { version = "0.16.2", path = "../wasi" }
-wasmer-runtime-core = { package = "wasmer-runtime-core-asml-fork", version = "0.1.1", path = "../runtime-core" }
+wasmer-wasi = { version = "1.0.1", path = "../wasi" }
+tracing = "0.1"
+minifb = "0.19"
 ref_thread_local = "0.0"
 serde = "1"
 typetag = "0.1"
