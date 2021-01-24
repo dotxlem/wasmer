@@ -1,9 +1,3 @@
 (function() {var implementors = {};
-implementors["kwasmd"] = [{"text":"impl StructOpt for <a class=\"enum\" href=\"kwasmd/enum.CLIOptions.html\" title=\"enum kwasmd::CLIOptions\">CLIOptions</a>","synthetic":false,"types":["kwasmd::CLIOptions"]},{"text":"impl StructOpt for <a class=\"struct\" href=\"kwasmd/struct.Listen.html\" title=\"struct kwasmd::Listen\">Listen</a>","synthetic":false,"types":["kwasmd::Listen"]}];
-
-            if (window.register_implementors) {
-                window.register_implementors(implementors);
-            } else {
-                window.pending_implementors = implementors;
-            }
-        })()
+implementors["wasmer_cli"] = [{"text":"impl StructOpt for Cache","synthetic":false,"types":[]},{"text":"impl StructOpt for Config","synthetic":false,"types":[]},{"text":"impl StructOpt for Inspect","synthetic":false,"types":[]},{"text":"impl StructOpt for Wasi","synthetic":false,"types":[]},{"text":"impl StructOpt for Run","synthetic":false,"types":[]},{"text":"impl StructOpt for SelfUpdate","synthetic":false,"types":[]},{"text":"impl StructOpt for Validate","synthetic":false,"types":[]},{"text":"impl StructOpt for Wast","synthetic":false,"types":[]},{"text":"impl StructOpt for WasmFeatures","synthetic":false,"types":[]},{"text":"impl StructOpt for WasmerCLIOptions","synthetic":false,"types":[]},{"text":"impl StructOpt for StoreOptions","synthetic":false,"types":[]},{"text":"impl StructOpt for CompilerOptions","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
