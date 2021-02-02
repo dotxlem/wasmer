@@ -245,7 +245,7 @@ pub fn _getaddrinfo(
 
             // connect list
             if let Some(prev_guest) = previous_guest_node {
-                let mut pg = prev_guest.deref_mut(ctx.memory(0)).unwrap().get_mut();
+                let mut pg = prev_guest.deref_mut(ctx.memory(0)).unwrap().load();
                 pg.ai_next = current_guest_node_ptr;
             }
 
@@ -257,10 +257,10 @@ pub fn _getaddrinfo(
                 let host_sockaddr_ptr = (*current_host_node).ai_addr;
                 let guest_sockaddr_ptr: WasmPtr<EmSockAddr> =
                     call_malloc_with_cast(ctx, host_addrlen as _);
-                let guest_sockaddr = guest_sockaddr_ptr
+                let mut guest_sockaddr = guest_sockaddr_ptr
                     .deref_mut(ctx.memory(0))
                     .unwrap()
-                    .get_mut();
+                    .load();
 
                 guest_sockaddr.sa_family = (*host_sockaddr_ptr).sa_family as i16;
                 guest_sockaddr.sa_data = (*host_sockaddr_ptr).sa_data;
@@ -293,7 +293,7 @@ pub fn _getaddrinfo(
             let mut current_guest_node = current_guest_node_ptr
                 .deref_mut(ctx.memory(0))
                 .unwrap()
-                .get_mut();
+                .load();
             current_guest_node.ai_flags = (*current_host_node).ai_flags;
             current_guest_node.ai_family = (*current_host_node).ai_family;
             current_guest_node.ai_socktype = (*current_host_node).ai_socktype;

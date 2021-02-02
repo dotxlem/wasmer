@@ -633,7 +633,7 @@ pub fn ___syscall102(ctx: &EmEnv, _which: c_int, mut varargs: VarArgs) -> c_int 
                 address_len.deref(ctx.memory(0)).unwrap().load()
             );
             let address_len_addr =
-                unsafe { address_len.deref_mut(ctx.memory(0)).unwrap().get_mut() };
+                unsafe { address_len.deref_mut(ctx.memory(0)).unwrap().as_ptr() };
             // let mut address_len_addr: socklen_t = 0;
 
             let mut host_address: sockaddr = sockaddr {
@@ -643,7 +643,7 @@ pub fn ___syscall102(ctx: &EmEnv, _which: c_int, mut varargs: VarArgs) -> c_int 
                 sa_len: Default::default(),
             };
             let fd = unsafe { accept(socket, &mut host_address, address_len_addr) };
-            let address_addr = unsafe { address.deref_mut(ctx.memory(0)).unwrap().get_mut() };
+            let mut address_addr = unsafe { address.deref_mut(ctx.memory(0)).unwrap().load() };
 
             address_addr.sa_family = host_address.sa_family as _;
             address_addr.sa_data = host_address.sa_data;
@@ -654,10 +654,12 @@ pub fn ___syscall102(ctx: &EmEnv, _which: c_int, mut varargs: VarArgs) -> c_int 
                 ioctl(fd, translate_ioctl(WASM_FIOCLEX) as _);
             };
 
-            debug!(
-                "address: {:?}, len: {}, result fd = {}",
-                address_addr, address_len_addr, fd
-            );
+            unsafe {
+                debug!(
+                    "address: {:?}, len: {}, result fd = {}",
+                    address_addr, *address_len_addr, fd
+                );
+            }
 
             fd as _
         }
@@ -668,7 +670,7 @@ pub fn ___syscall102(ctx: &EmEnv, _which: c_int, mut varargs: VarArgs) -> c_int 
             let address: WasmPtr<EmSockAddr> = socket_varargs.get(ctx);
             let address_len: WasmPtr<u32> = socket_varargs.get(ctx);
             let address_len_addr =
-                unsafe { address_len.deref_mut(ctx.memory(0)).unwrap().get_mut() };
+                unsafe { address_len.deref_mut(ctx.memory(0)).unwrap().load() };
 
             let mut sock_addr_host: sockaddr = sockaddr {
                 sa_family: Default::default(),
@@ -684,7 +686,7 @@ pub fn ___syscall102(ctx: &EmEnv, _which: c_int, mut varargs: VarArgs) -> c_int 
                 )
             };
             // translate from host data into emscripten data
-            let mut address_mut = unsafe { address.deref_mut(ctx.memory(0)).unwrap().get_mut() };
+            let mut address_mut = unsafe { address.deref_mut(ctx.memory(0)).unwrap().load() };
             address_mut.sa_family = sock_addr_host.sa_family as _;
             address_mut.sa_data = sock_addr_host.sa_data;
 
@@ -859,7 +861,7 @@ pub fn ___syscall168(ctx: &EmEnv, _which: i32, mut varargs: VarArgs) -> i32 {
     let nfds: u32 = varargs.get(ctx);
     let timeout: i32 = varargs.get(ctx);
 
-    let fds_mut = unsafe { fds.deref_mut(ctx.memory(0)).unwrap().get_mut() };
+    let fds_mut = unsafe { fds.deref_mut(ctx.memory(0)).unwrap().as_ptr() };
 
     let ret = unsafe {
         libc::poll(

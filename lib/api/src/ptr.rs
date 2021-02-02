@@ -6,8 +6,9 @@
 //! Therefore, you should use this abstraction whenever possible to avoid memory
 //! related bugs when implementing an ABI.
 
+use crossbeam_utils::atomic::AtomicCell;
 use crate::{externals::Memory, FromToNativeWasmType};
-use std::{cell::Cell, fmt, marker::PhantomData, mem};
+use std::{fmt, marker::PhantomData, mem};
 use wasmer_types::ValueType;
 
 /// The `Array` marker type. This type can be used like `WasmPtr<T, Array>`
@@ -74,7 +75,7 @@ impl<T: Copy + ValueType> WasmPtr<T, Item> {
     /// If you're unsure what that means, it likely does not apply to you.
     /// This invariant will be enforced in the future.
     #[inline]
-    pub fn deref<'a>(self, memory: &'a Memory) -> Option<&'a Cell<T>> {
+    pub fn deref<'a>(self, memory: &'a Memory) -> Option<&'a AtomicCell<T>> {
         if (self.offset as usize) + mem::size_of::<T>() > memory.size().bytes().0
             || mem::size_of::<T>() == 0
         {
@@ -84,7 +85,7 @@ impl<T: Copy + ValueType> WasmPtr<T, Item> {
             let cell_ptr = align_pointer(
                 memory.view::<u8>().as_ptr().add(self.offset as usize) as usize,
                 mem::align_of::<T>(),
-            ) as *const Cell<T>;
+            ) as *const AtomicCell<T>;
             Some(&*cell_ptr)
         }
     }
@@ -97,7 +98,7 @@ impl<T: Copy + ValueType> WasmPtr<T, Item> {
     ///  `&mut T` that point to the same memory. You should ensure that you have
     ///   exclusive access to Wasm linear memory before calling this method.
     #[inline]
-    pub unsafe fn deref_mut<'a>(self, memory: &'a Memory) -> Option<&'a mut Cell<T>> {
+    pub unsafe fn deref_mut<'a>(self, memory: &'a Memory) -> Option<&'a mut AtomicCell<T>> {
         if (self.offset as usize) + mem::size_of::<T>() > memory.size().bytes().0
             || mem::size_of::<T>() == 0
         {
@@ -106,7 +107,7 @@ impl<T: Copy + ValueType> WasmPtr<T, Item> {
         let cell_ptr = align_pointer(
             memory.view::<u8>().as_ptr().add(self.offset as usize) as usize,
             mem::align_of::<T>(),
-        ) as *mut Cell<T>;
+        ) as *mut AtomicCell<T>;
         Some(&mut *cell_ptr)
     }
 }
@@ -122,7 +123,7 @@ impl<T: Copy + ValueType> WasmPtr<T, Array> {
     /// If you're unsure what that means, it likely does not apply to you.
     /// This invariant will be enforced in the future.
     #[inline]
-    pub fn deref(self, memory: &Memory, index: u32, length: u32) -> Option<&[Cell<T>]> {
+    pub fn deref(self, memory: &Memory, index: u32, length: u32) -> Option<&[AtomicCell<T>]> {
         // gets the size of the item in the array with padding added such that
         // for any index, we will always result an aligned memory access
         let item_size = mem::size_of::<T>() + (mem::size_of::<T>() % mem::align_of::<T>());
@@ -140,7 +141,7 @@ impl<T: Copy + ValueType> WasmPtr<T, Array> {
             let cell_ptr = align_pointer(
                 memory.view::<u8>().as_ptr().add(self.offset as usize) as usize,
                 mem::align_of::<T>(),
-            ) as *const Cell<T>;
+            ) as *const AtomicCell<T>;
             let cell_ptrs = &std::slice::from_raw_parts(cell_ptr, slice_full_len)
                 [index as usize..slice_full_len];
             Some(cell_ptrs)
@@ -160,7 +161,7 @@ impl<T: Copy + ValueType> WasmPtr<T, Array> {
         memory: &Memory,
         index: u32,
         length: u32,
-    ) -> Option<&mut [Cell<T>]> {
+    ) -> Option<&mut [AtomicCell<T>]> {
         // gets the size of the item in the array with padding added such that
         // for any index, we will always result an aligned memory access
         let item_size = mem::size_of::<T>() + (mem::size_of::<T>() % mem::align_of::<T>());
@@ -177,7 +178,7 @@ impl<T: Copy + ValueType> WasmPtr<T, Array> {
         let cell_ptr = align_pointer(
             memory.view::<u8>().as_ptr().add(self.offset as usize) as usize,
             mem::align_of::<T>(),
-        ) as *mut Cell<T>;
+        ) as *mut AtomicCell<T>;
         let cell_ptrs = &mut std::slice::from_raw_parts_mut(cell_ptr, slice_full_len)
             [index as usize..slice_full_len];
         Some(cell_ptrs)

@@ -5,7 +5,7 @@
 // don't want to warn about unusued code here
 #![allow(dead_code)]
 
-use std::{cell::Cell, fmt};
+use std::fmt;
 use crossbeam_utils::atomic::AtomicCell;
 pub use wasmer::{Array, FromToNativeWasmType, Memory, ValueType};
 

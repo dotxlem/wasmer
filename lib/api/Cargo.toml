@@ -11,6 +11,7 @@ readme = "README.md"
 edition = "2018"
 
 [dependencies]
+crossbeam-utils = "0.8.1"
 wasmer-vm = { path = "../vm", version = "1.0.1" }
 wasmer-compiler-singlepass = { path = "../compiler-singlepass", version = "1.0.1", optional = true }
 wasmer-compiler-cranelift = { path = "../compiler-cranelift", version = "1.0.1", optional = true }
