@@ -294,6 +294,9 @@ impl NativeArtifact {
         );
 
         let linker: &'static str = engine_inner.linker().into();
+        println!("DEBUG: {}", linker);
+        println!("DEBUG: {:?}", target_args);
+        println!("DEBUG: {:?}", cross_compiling_args);
         let output = Command::new(linker)
             .arg(&filepath)
             .arg("-o")
