@@ -269,7 +269,7 @@ impl NativeArtifact {
         let cross_compiling_args: Vec<String> = if is_cross_compiling {
             vec![
                 format!("--target={}", target_triple_str),
-                "-fuse-ld=ld".to_string(),
+                "-fuse-ld=lld".to_string(),
                 "-nodefaultlibs".to_string(),
                 "-nostdlib".to_string(),
             ]
