@@ -1,5 +1,5 @@
 [package]
-name = "wasmer-middlewares"
+name = "wasmer-middlewares-asml-fork"
 version = "1.0.2"
 authors = ["Wasmer Engineering Team <engineering@wasmer.io>"]
 description = "A collection of various useful middlewares"
@@ -11,7 +11,7 @@ readme = "README.md"
 edition = "2018"
 
 [dependencies]
-wasmer = { path = "../api", version = "1.0.2" }
+wasmer = { package = "wasmer-asml-fork", path = "../api", version = "1.0.2" }
 wasmer-types = { path = "../wasmer-types", version = "1.0.2" }
 wasmer-vm = { path = "../vm", version = "1.0.2" }
 

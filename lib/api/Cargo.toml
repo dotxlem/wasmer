@@ -1,5 +1,5 @@
 [package]
-name = "wasmer"
+name = "wasmer-asml-fork"
 version = "1.0.2"
 description = "High-performant WebAssembly runtime"
 categories = ["wasm"]
@@ -16,7 +16,7 @@ wasmer-compiler-singlepass = { path = "../compiler-singlepass", version = "1.0.2
 wasmer-compiler-cranelift = { path = "../compiler-cranelift", version = "1.0.2", optional = true }
 wasmer-compiler-llvm = { path = "../compiler-llvm", version = "1.0.2", optional = true }
 wasmer-compiler = { path = "../compiler", version = "1.0.2" }
-wasmer-derive = { path = "../derive", version = "1.0.2" }
+wasmer-derive = { package = "wasmer-derive-asml-fork", path = "../derive", version = "1.0.2" }
 wasmer-engine = { path = "../engine", version = "1.0.2" }
 wasmer-engine-jit = { path = "../engine-jit", version = "1.0.2", optional = true }
 wasmer-engine-native = { path = "../engine-native", version = "1.0.2", optional = true }

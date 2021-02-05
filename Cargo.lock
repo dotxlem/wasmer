@@ -2408,7 +2408,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd4945e4943ae02d15c13962b38a5b1e81eadd4b71214eee75af64a4d6a4fd64"
 
 [[package]]
-name = "wasmer"
+name = "wasmer-asml-fork"
 version = "1.0.2"
 dependencies = [
  "anyhow",
@@ -2424,7 +2424,7 @@ dependencies = [
  "wasmer-compiler-cranelift",
  "wasmer-compiler-llvm",
  "wasmer-compiler-singlepass",
- "wasmer-derive",
+ "wasmer-derive-asml-fork",
  "wasmer-engine",
  "wasmer-engine-jit",
  "wasmer-engine-native",
@@ -2449,32 +2449,32 @@ dependencies = [
  "serde",
  "thiserror",
  "typetag",
- "wasmer",
+ "wasmer-asml-fork",
  "wasmer-compiler",
  "wasmer-compiler-cranelift",
  "wasmer-compiler-llvm",
  "wasmer-compiler-singlepass",
- "wasmer-emscripten",
+ "wasmer-emscripten-asml-fork",
  "wasmer-engine",
  "wasmer-engine-jit",
  "wasmer-engine-native",
  "wasmer-engine-object-file",
  "wasmer-types",
- "wasmer-wasi",
+ "wasmer-wasi-asml-fork",
 ]
 
 [[package]]
-name = "wasmer-cache"
+name = "wasmer-cache-asml-fork"
 version = "1.0.2"
 dependencies = [
  "blake3",
  "hex",
  "thiserror",
- "wasmer",
+ "wasmer-asml-fork",
 ]
 
 [[package]]
-name = "wasmer-cli"
+name = "wasmer-cli-asml-fork"
 version = "1.0.2"
 dependencies = [
  "anyhow",
@@ -2487,22 +2487,22 @@ dependencies = [
  "log",
  "structopt",
  "tempfile",
- "wasmer",
- "wasmer-cache",
+ "wasmer-asml-fork",
+ "wasmer-cache-asml-fork",
  "wasmer-compiler",
  "wasmer-compiler-cranelift",
  "wasmer-compiler-llvm",
  "wasmer-compiler-singlepass",
- "wasmer-emscripten",
+ "wasmer-emscripten-asml-fork",
  "wasmer-engine",
  "wasmer-engine-jit",
  "wasmer-engine-native",
  "wasmer-engine-object-file",
  "wasmer-types",
  "wasmer-vm",
- "wasmer-wasi",
- "wasmer-wasi-experimental-io-devices",
- "wasmer-wast",
+ "wasmer-wasi-asml-fork",
+ "wasmer-wasi-experimental-io-devices-asml-fork",
+ "wasmer-wast-asml-fork",
 ]
 
 [[package]]
@@ -2584,7 +2584,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasmer-derive"
+name = "wasmer-derive-asml-fork"
 version = "1.0.2"
 dependencies = [
  "compiletest_rs",
@@ -2592,11 +2592,11 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
- "wasmer",
+ "wasmer-asml-fork",
 ]
 
 [[package]]
-name = "wasmer-emscripten"
+name = "wasmer-emscripten-asml-fork"
 version = "1.0.2"
 dependencies = [
  "byteorder",
@@ -2606,7 +2606,7 @@ dependencies = [
  "libc",
  "log",
  "time",
- "wasmer",
+ "wasmer-asml-fork",
 ]
 
 [[package]]
@@ -2703,10 +2703,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasmer-middlewares"
+name = "wasmer-middlewares-asml-fork"
 version = "1.0.2"
 dependencies = [
- "wasmer",
+ "wasmer-asml-fork",
  "wasmer-types",
  "wasmer-vm",
 ]
@@ -2749,7 +2749,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasmer-wasi"
+name = "wasmer-wasi-asml-fork"
 version = "1.0.2"
 dependencies = [
  "bincode",
@@ -2763,12 +2763,12 @@ dependencies = [
  "time",
  "tracing",
  "typetag",
- "wasmer",
+ "wasmer-asml-fork",
  "winapi",
 ]
 
 [[package]]
-name = "wasmer-wasi-experimental-io-devices"
+name = "wasmer-wasi-experimental-io-devices-asml-fork"
 version = "1.0.2"
 dependencies = [
  "minifb",
@@ -2776,11 +2776,11 @@ dependencies = [
  "serde",
  "tracing",
  "typetag",
- "wasmer-wasi",
+ "wasmer-wasi-asml-fork",
 ]
 
 [[package]]
-name = "wasmer-wast"
+name = "wasmer-wast-asml-fork"
 version = "1.0.2"
 dependencies = [
  "anyhow",
@@ -2788,8 +2788,8 @@ dependencies = [
  "tempfile",
  "thiserror",
  "typetag",
- "wasmer",
- "wasmer-wasi",
+ "wasmer-asml-fork",
+ "wasmer-wasi-asml-fork",
  "wast 24.0.0",
 ]
 
@@ -2807,22 +2807,22 @@ dependencies = [
  "rustc_version 0.3.3",
  "tempfile",
  "test-generator",
- "wasmer",
- "wasmer-cache",
+ "wasmer-asml-fork",
+ "wasmer-cache-asml-fork",
  "wasmer-compiler",
  "wasmer-compiler-cranelift",
  "wasmer-compiler-llvm",
  "wasmer-compiler-singlepass",
- "wasmer-emscripten",
+ "wasmer-emscripten-asml-fork",
  "wasmer-engine",
  "wasmer-engine-dummy",
  "wasmer-engine-jit",
  "wasmer-engine-native",
  "wasmer-engine-object-file",
- "wasmer-middlewares",
+ "wasmer-middlewares-asml-fork",
  "wasmer-types",
- "wasmer-wasi",
- "wasmer-wast",
+ "wasmer-wasi-asml-fork",
+ "wasmer-wast-asml-fork",
 ]
 
 [[package]]
