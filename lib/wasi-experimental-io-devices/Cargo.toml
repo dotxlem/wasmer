@@ -1,6 +1,6 @@
 [package]
 name = "wasmer-wasi-experimental-io-devices-asml-fork"
-version = "1.0.2"
+version = "2.0.0"
 description = "An experimental non-standard WASI extension for graphics"
 categories = ["wasm"]
 keywords = ["wasm", "webassembly", "types"]
@@ -14,9 +14,9 @@ edition = "2018"
 maintenance = { status = "experimental" }
 
 [dependencies]
-wasmer-wasi = { package = "wasmer-wasi-asml-fork", version = "1.0.2", path = "../wasi" }
+wasmer-wasi = { package = "wasmer-wasi-asml-fork", version = "2.0.0", path = "../wasi" }
 tracing = "0.1"
 minifb = "0.19"
-ref_thread_local = "0.0"
+ref_thread_local = "0.1"
 serde = "1"
 typetag = "0.1"
