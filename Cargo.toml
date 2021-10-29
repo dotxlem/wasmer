@@ -10,7 +10,7 @@ publish = false
 autoexamples = false
 
 [dependencies]
-wasmer = { version = "2.0.0", path = "lib/api", default-features = false }
+wasmer = { package = "wasmer-asml-fork", version = "2.0.0", path = "lib/api", default-features = false }
 wasmer-compiler = { version = "2.0.0", path = "lib/compiler" }
 wasmer-compiler-cranelift = { version = "2.0.0", path = "lib/compiler-cranelift", optional = true }
 wasmer-compiler-singlepass = { version = "2.0.0", path = "lib/compiler-singlepass", optional = true }

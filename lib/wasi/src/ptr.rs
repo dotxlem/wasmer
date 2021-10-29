@@ -2,7 +2,7 @@
 //! if memory access failed
 
 use crate::syscalls::types::{__wasi_errno_t, __WASI_EFAULT};
-use std::{cell::Cell, fmt};
+use std::fmt;
 use crossbeam_utils::atomic::AtomicCell;
 pub use wasmer::{Array, FromToNativeWasmType, Item, Memory, ValueType, WasmPtr as BaseWasmPtr};
 

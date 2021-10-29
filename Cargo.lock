@@ -2351,11 +2351,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasmer"
+name = "wasmer-asml-fork"
 version = "2.0.0"
 dependencies = [
  "anyhow",
  "cfg-if 1.0.0",
+ "crossbeam-utils",
  "indexmap",
  "libc",
  "loupe",
@@ -2367,7 +2368,7 @@ dependencies = [
  "wasmer-compiler-cranelift",
  "wasmer-compiler-llvm",
  "wasmer-compiler-singlepass",
- "wasmer-derive",
+ "wasmer-derive-asml-fork",
  "wasmer-engine",
  "wasmer-engine-dylib",
  "wasmer-engine-universal",
@@ -2384,13 +2385,13 @@ dependencies = [
  "anyhow",
  "libfuzzer-sys",
  "wasm-smith",
- "wasmer",
+ "wasmer-asml-fork",
  "wasmer-compiler-cranelift",
  "wasmer-compiler-llvm",
  "wasmer-compiler-singlepass",
  "wasmer-engine-dylib",
  "wasmer-engine-universal",
- "wasmer-middlewares",
+ "wasmer-middlewares-asml-fork",
  "wasmprinter",
 ]
 
@@ -2409,22 +2410,22 @@ dependencies = [
  "serde",
  "thiserror",
  "typetag",
- "wasmer",
+ "wasmer-asml-fork",
  "wasmer-compiler-cranelift",
  "wasmer-compiler-llvm",
  "wasmer-compiler-singlepass",
- "wasmer-emscripten",
+ "wasmer-emscripten-asml-fork",
  "wasmer-engine",
  "wasmer-engine-dylib",
  "wasmer-engine-staticlib",
  "wasmer-engine-universal",
- "wasmer-middlewares",
+ "wasmer-middlewares-asml-fork",
  "wasmer-types",
- "wasmer-wasi",
+ "wasmer-wasi-asml-fork",
 ]
 
 [[package]]
-name = "wasmer-cache"
+name = "wasmer-cache-asml-fork"
 version = "2.0.0"
 dependencies = [
  "blake3",
@@ -2433,14 +2434,14 @@ dependencies = [
  "rand",
  "tempfile",
  "thiserror",
- "wasmer",
+ "wasmer-asml-fork",
  "wasmer-compiler-singlepass",
  "wasmer-engine-dylib",
  "wasmer-engine-universal",
 ]
 
 [[package]]
-name = "wasmer-cli"
+name = "wasmer-cli-asml-fork"
 version = "2.0.0"
 dependencies = [
  "anyhow",
@@ -2453,22 +2454,22 @@ dependencies = [
  "log",
  "structopt",
  "tempfile",
- "wasmer",
- "wasmer-cache",
+ "wasmer-asml-fork",
+ "wasmer-cache-asml-fork",
  "wasmer-compiler",
  "wasmer-compiler-cranelift",
  "wasmer-compiler-llvm",
  "wasmer-compiler-singlepass",
- "wasmer-emscripten",
+ "wasmer-emscripten-asml-fork",
  "wasmer-engine",
  "wasmer-engine-dylib",
  "wasmer-engine-staticlib",
  "wasmer-engine-universal",
  "wasmer-types",
  "wasmer-vm",
- "wasmer-wasi",
- "wasmer-wasi-experimental-io-devices",
- "wasmer-wast",
+ "wasmer-wasi-asml-fork",
+ "wasmer-wasi-experimental-io-devices-asml-fork",
+ "wasmer-wast-asml-fork",
 ]
 
 [[package]]
@@ -2553,7 +2554,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasmer-derive"
+name = "wasmer-derive-asml-fork"
 version = "2.0.0"
 dependencies = [
  "compiletest_rs",
@@ -2561,20 +2562,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
- "wasmer",
+ "wasmer-asml-fork",
 ]
 
 [[package]]
-name = "wasmer-emscripten"
+name = "wasmer-emscripten-asml-fork"
 version = "2.0.0"
 dependencies = [
  "byteorder",
+ "crossbeam-utils",
  "getrandom",
  "lazy_static",
  "libc",
  "log",
  "time",
- "wasmer",
+ "wasmer-asml-fork",
 ]
 
 [[package]]
@@ -2674,11 +2676,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasmer-middlewares"
+name = "wasmer-middlewares-asml-fork"
 version = "2.0.0"
 dependencies = [
  "loupe",
- "wasmer",
+ "wasmer-asml-fork",
  "wasmer-types",
  "wasmer-vm",
 ]
@@ -2725,10 +2727,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasmer-wasi"
+name = "wasmer-wasi-asml-fork"
 version = "2.0.0"
 dependencies = [
  "bincode",
+ "byteorder",
+ "crossbeam-utils",
  "generational-arena",
  "getrandom",
  "libc",
@@ -2736,13 +2740,13 @@ dependencies = [
  "thiserror",
  "tracing",
  "typetag",
- "wasmer",
+ "wasmer-asml-fork",
  "wasmer-wasi-types",
  "winapi",
 ]
 
 [[package]]
-name = "wasmer-wasi-experimental-io-devices"
+name = "wasmer-wasi-experimental-io-devices-asml-fork"
 version = "2.0.0"
 dependencies = [
  "minifb",
@@ -2750,7 +2754,7 @@ dependencies = [
  "serde",
  "tracing",
  "typetag",
- "wasmer-wasi",
+ "wasmer-wasi-asml-fork",
 ]
 
 [[package]]
@@ -2764,7 +2768,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "wasmer-wast"
+name = "wasmer-wast-asml-fork"
 version = "2.0.0"
 dependencies = [
  "anyhow",
@@ -2772,8 +2776,8 @@ dependencies = [
  "tempfile",
  "thiserror",
  "typetag",
- "wasmer",
- "wasmer-wasi",
+ "wasmer-asml-fork",
+ "wasmer-wasi-asml-fork",
  "wast",
 ]
 
@@ -2794,22 +2798,22 @@ dependencies = [
  "serial_test",
  "tempfile",
  "test-generator",
- "wasmer",
- "wasmer-cache",
+ "wasmer-asml-fork",
+ "wasmer-cache-asml-fork",
  "wasmer-compiler",
  "wasmer-compiler-cranelift",
  "wasmer-compiler-llvm",
  "wasmer-compiler-singlepass",
- "wasmer-emscripten",
+ "wasmer-emscripten-asml-fork",
  "wasmer-engine",
  "wasmer-engine-dummy",
  "wasmer-engine-dylib",
  "wasmer-engine-staticlib",
  "wasmer-engine-universal",
- "wasmer-middlewares",
+ "wasmer-middlewares-asml-fork",
  "wasmer-types",
- "wasmer-wasi",
- "wasmer-wast",
+ "wasmer-wasi-asml-fork",
+ "wasmer-wast-asml-fork",
 ]
 
 [[package]]
